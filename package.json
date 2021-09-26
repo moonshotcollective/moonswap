@@ -20,6 +20,8 @@
   },
   "homepage": "https://github.com/QEDK/moonswap#readme",
   "dependencies": {
+    "@openzeppelin/contracts": "^4.3.2",
+    "@uniswap/v3-periphery": "^1.2.0",
     "hardhat": "^2.6.4"
   },
   "devDependencies": {
