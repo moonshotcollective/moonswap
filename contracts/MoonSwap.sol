@@ -1,46 +1,105 @@
 //SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.7;
 
-import '@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol';
-import '@uniswap/v3-periphery/contracts/libraries/TransferHelper.sol';
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 
 contract MoonSwap {
+    uinsg SafeERC20 for IERC20;
     using Counters for Counters.Counter;
-    ISwapRouter public immutable swapRouter;
 
     struct Swap {
-        IERC20 from;
-        IERC20 to;
-        uint256 tokenLeft;
-        address executor;
+        IERC20 inToken;
+        IERC20 outToken;
+        uint256 tokensIn;
+        uint256 tokensOut;
+        uint256 tokensInLeft;
+        uint256 tokensOutLeft;
+        address inTokenParty;
+        address outTokenParty;
+        uint256 lastExecuted;
+        uint256 interval;
         bool paid;
         bool status;
     }
 
     Counters.Counter public swapId;
-
     mapping(uint256 => Swap) public swaps;
+    mapping(address => uint256) public claimableFees;
+    address public admin;
+    bool public paused;
 
-    constructor(ISwapRouter _swapRouter) {
-        swapRouter = _swapRouter;
+    modifier adminOnly() {
+        require(msg.sender == admin, "ADMIN_ONLY");
+        _;
     }
 
-    function swapExactInputMultihop(uint256 amountIn, uint256 amountOutMinimum, uint256 ttl, bytes memory path) internal returns (uint256 amountOut) {
-        // Transfer `amountIn` of DAI to this contract.
-        TransferHelper.safeTransferFrom(DAI, msg.sender, address(this), amountIn);
+    modifier isNotPaused() {
+        require(!paused, "PAUSED");
+        _;
+    }
 
-        // Approve the router to spend DAI.
-        TransferHelper.safeApprove(DAI, address(swapRouter), amountIn);
+    constructor() {
+        admin = msg.sender;
+    }
+
+    function claimFees(IERC20 _token) external {
+        _token.safeTransfer(admin, claimableFees[address(_token)]);
+    }
+
+    function togglePause() external adminOnly {
+        pause = !pause;
+    }
+
+    function recoverFunds(IERC20 _token, uint256 amount) external adminOnly {
+        require(paused, "NOT_PAUSED");
+        _token.safeTransfer(admin, amount);
+    }
+
+    function createNewSwap(IERC20 _inToken, IERC20 _outToken, uint256 inTokenAmount, uint256 interval, bool _paid) external isNotPaused returns (uint256) {
+        _inToken.safeTransferFrom(msg.sender, address(this), inTokenAmount);
+        uint256 fee;
+        if (_paid) {
+            fee = amountIn - (amountIn/100);
+            claimableFees[address] += fee;
+        }
+        Swap memory newSwap = Swap(
+            _inToken, // inToken
+            _outToken, // outToken
+            amountIn - fee, // tokensIn
+            0, // tokensOut
+            amountIn - fee, // tokensInLeft
+            0, // tokensOutLeft
+            msg.sender, // tokensInParty
+            address(0), // tokensOutParty
+            _paid, // paid status
+            false, // status
+        );
+        swaps[swapId.current()] = newSwap;
+        swapId.increment();
+        return swapId.increment() - 1
+    }
+
+    function commitToSwap(uint256 swapId, uint256 outTokenAmount) external isNotPaused returns (uint256) {
+        Swap memory newSwap = swaps[swapId];
+        require(newSwap.inTokenParty != address(0) && newSwap.outTokenParty == address(0) && newSwap.status()
+    }
+
+    function swapExactInputMultihop(IERC20 _from, IERC20 _to, uint256 amountIn, bytes _path, bytes memory path) internal returns (uint256 amountOut) {
+        // Transfer `amountIn` of _from to the contracy.
+        TransferHelper.safeTransferFrom(_from, msg.sender, address(this), amountIn);
+
+        // Approve the router to spend tokens.
+        TransferHelper.safeApprove(_from, address(swapRouter), amountIn);
 
         // Multiple pool swaps are encoded through bytes called a `path`. A path is a sequence of token addresses and poolFees that define the pools used in the swaps.
         // The format for pool encoding is (tokenIn, fee, tokenOut/tokenIn, fee, tokenOut) where tokenIn/tokenOut parameter is the shared token across the pools.
-        // Since we are swapping DAI to USDC and then USDC to WETH9 the path encoding is (DAI, 0.3%, USDC, 0.3%, WETH9).
         ISwapRouter.ExactInputParams memory params =
             ISwapRouter.ExactInputParams({
-                path: path,
+                path: _path,
                 recipient: address(this),
-                deadline: block.timestamp + ttl,
+                deadline: block.timestamp,
                 amountIn: amountIn,
                 amountOutMinimum: amountOutMinimum
             });
