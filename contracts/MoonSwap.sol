@@ -4,23 +4,25 @@ pragma solidity ^0.8.7;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
+import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 contract MoonSwap {
-    uinsg SafeERC20 for IERC20;
+    using SafeERC20 for IERC20;
     using Counters for Counters.Counter;
+    using EnumerableSet for EnumerableSet.UintSet;
 
     struct Swap {
         IERC20 inToken;
         IERC20 outToken;
         uint256 tokensIn;
         uint256 tokensOut;
-        uint256 tokensInLeft;
-        uint256 tokensOutLeft;
+        uint256 tokensInAlotted;
+        uint256 tokensOutAlotted;
         address inTokenParty;
         address outTokenParty;
-        uint256 lastExecuted;
-        uint256 interval;
-        bool paid;
+        uint256 lastExecuted; // last time a pool swap was executed
+        uint256 interval; // interval between two swaps
+        uint256 splits; // max splits, 0 = instant payout
         bool status;
     }
 
@@ -29,6 +31,8 @@ contract MoonSwap {
     mapping(address => uint256) public claimableFees;
     address public admin;
     bool public paused;
+
+    EnumerableSet.UintSet private activeSwaps;
 
     modifier adminOnly() {
         require(msg.sender == admin, "ADMIN_ONLY");
@@ -44,12 +48,12 @@ contract MoonSwap {
         admin = msg.sender;
     }
 
-    function claimFees(IERC20 _token) external {
+    function claimFees(IERC20 _token) external isNotPaused {
         _token.safeTransfer(admin, claimableFees[address(_token)]);
     }
 
     function togglePause() external adminOnly {
-        pause = !pause;
+        paused = !paused;
     }
 
     function recoverFunds(IERC20 _token, uint256 amount) external adminOnly {
@@ -57,54 +61,74 @@ contract MoonSwap {
         _token.safeTransfer(admin, amount);
     }
 
-    function createNewSwap(IERC20 _inToken, IERC20 _outToken, uint256 inTokenAmount, uint256 interval, bool _paid) external isNotPaused returns (uint256) {
-        _inToken.safeTransferFrom(msg.sender, address(this), inTokenAmount);
-        uint256 fee;
-        if (_paid) {
-            fee = amountIn - (amountIn/100);
-            claimableFees[address] += fee;
-        }
+    function createNewSwap(IERC20 _inToken, IERC20 _outToken, uint256 _inTokenAmount, uint256 _interval, uint256 _splits)
+        external isNotPaused returns (uint256) {
+        _inToken.safeTransferFrom(msg.sender, address(this), _inTokenAmount);
+        uint256 fee = _inTokenAmount - (_inTokenAmount/100);
+        claimableFees[address(_inToken)] += fee;
         Swap memory newSwap = Swap(
             _inToken, // inToken
             _outToken, // outToken
-            amountIn - fee, // tokensIn
+            _inTokenAmount - fee, // tokensIn
             0, // tokensOut
-            amountIn - fee, // tokensInLeft
-            0, // tokensOutLeft
+            0, // tokensInAlotted
+            0, // tokensOutAlotted
             msg.sender, // tokensInParty
             address(0), // tokensOutParty
-            _paid, // paid status
-            false, // status
+            0, // last execution
+            _interval, // accumulates (amount/splits+1) per interval
+            _splits, // splits + 1 parts
+            false // status
         );
         swaps[swapId.current()] = newSwap;
+        activeSwaps.add(swapId.current());
         swapId.increment();
-        return swapId.increment() - 1
+        return swapId.current() - 1;
     }
 
-    function commitToSwap(uint256 swapId, uint256 outTokenAmount) external isNotPaused returns (uint256) {
-        Swap memory newSwap = swaps[swapId];
-        require(newSwap.inTokenParty != address(0) && newSwap.outTokenParty == address(0) && newSwap.status()
+    function commitToSwap(uint256 _swapId, uint256 _outTokenAmount) external isNotPaused returns (bool) {
+        Swap storage newSwap = swaps[_swapId];
+        require(newSwap.inTokenParty != address(0) && newSwap.outTokenParty == address(0) && newSwap.status, "CANNOT_COMMIT");
+        newSwap.outToken.safeTransferFrom(msg.sender, address(this), _outTokenAmount);
+        newSwap.tokensOut = _outTokenAmount;
+        newSwap.outTokenParty = msg.sender;
+        if (newSwap.splits == 0) { // execute swap instantly
+            newSwap.tokensInAlotted = newSwap.tokensOut;
+            newSwap.tokensOutAlotted = newSwap.tokensIn;
+            newSwap.status = false;
+            return true;
+        }
+        newSwap.status = true;
+        return true;
     }
 
-    function swapExactInputMultihop(IERC20 _from, IERC20 _to, uint256 amountIn, bytes _path, bytes memory path) internal returns (uint256 amountOut) {
-        // Transfer `amountIn` of _from to the contracy.
-        TransferHelper.safeTransferFrom(_from, msg.sender, address(this), amountIn);
+    function claimSwap(uint256 swapId) external isNotPaused returns (bool) {
+        Swap memory swap = swaps[swapId];
+        if (msg.sender == swap.inTokenParty) {
+            swap.outToken.safeTransfer(msg.sender, swap.tokensOutAlotted);
+        } else if (msg.sender == swap.outTokenParty) {
+            swap.inToken.safeTransfer(msg.sender, swap.tokensInAlotted);
+        } else {
+            revert();
+        }
+    }
 
-        // Approve the router to spend tokens.
-        TransferHelper.safeApprove(_from, address(swapRouter), amountIn);
+    function checkUpkeep(bytes calldata /* checkData */) external view returns (bool upkeepNeeded, bytes memory performData) {
+        bool upkeepNeeded;
+        uint256[] memory upkeeps;
+        uint256 idx;
+        for (uint256 i = 0; i < activeSwaps.length(); i++) {
+            Swap memory swap = swaps[activeSwaps.at(i)];
+            if (swap.lastExecuted + swap.interval <= block.timestamp) {
+                upkeepNeeded = true;
+                upkeeps[idx] = activeSwaps.at(i);
+                idx++;
+            }
+        }
+        bytes memory performData = abi.encode(upkeeps);
+    }
 
-        // Multiple pool swaps are encoded through bytes called a `path`. A path is a sequence of token addresses and poolFees that define the pools used in the swaps.
-        // The format for pool encoding is (tokenIn, fee, tokenOut/tokenIn, fee, tokenOut) where tokenIn/tokenOut parameter is the shared token across the pools.
-        ISwapRouter.ExactInputParams memory params =
-            ISwapRouter.ExactInputParams({
-                path: _path,
-                recipient: address(this),
-                deadline: block.timestamp,
-                amountIn: amountIn,
-                amountOutMinimum: amountOutMinimum
-            });
-
-        // Executes the swap.
-        amountOut = swapRouter.exactInput(params);
+    function performUpkeep(bytes calldata performData) external {
+        uint256[] memory upkeeps = abi.decode(performData, (uint256[]));
     }
 }
