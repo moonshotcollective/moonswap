@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: Apache-2.0
-pragma solidity ^0.8.7;
+pragma solidity ^0.8.8;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -125,10 +125,14 @@ contract MoonSwap {
                 idx++;
             }
         }
-        bytes memory performData = abi.encode(upkeeps);
+        bytes memory performData = abi.encode(upkeeps, idx);
     }
 
     function performUpkeep(bytes calldata performData) external {
-        uint256[] memory upkeeps = abi.decode(performData, (uint256[]));
+        (uint256[] memory upkeeps, uint256 idx) = abi.decode(performData, (uint256[], uint256));
+        for (uint256 i = 0; i <= idx; i++) {
+            Swap memory swap = swaps[upkeeps[i]];
+
+        }
     }
 }
