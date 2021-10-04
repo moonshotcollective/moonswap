@@ -1,1 +1,190 @@
-{}
+{
+  "31337": {
+    "localhost": {
+      "name": "localhost",
+      "chainId": "31337",
+      "contracts": {
+        "MoonSwap": {
+          "address": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
+          "abi": [
+            {
+              "inputs": [],
+              "stateMutability": "nonpayable",
+              "type": "constructor"
+            },
+            {
+              "inputs": [],
+              "name": "admin",
+              "outputs": [
+                {
+                  "internalType": "address",
+                  "name": "",
+                  "type": "address"
+                }
+              ],
+              "stateMutability": "view",
+              "type": "function"
+            },
+            {
+              "inputs": [
+                {
+                  "internalType": "contract IERC20",
+                  "name": "_token",
+                  "type": "address"
+                }
+              ],
+              "name": "claimFees",
+              "outputs": [],
+              "stateMutability": "nonpayable",
+              "type": "function"
+            },
+            {
+              "inputs": [
+                {
+                  "internalType": "address",
+                  "name": "",
+                  "type": "address"
+                }
+              ],
+              "name": "claimableFees",
+              "outputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "",
+                  "type": "uint256"
+                }
+              ],
+              "stateMutability": "view",
+              "type": "function"
+            },
+            {
+              "inputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "_swapId",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "_outTokens",
+                  "type": "uint256"
+                }
+              ],
+              "name": "commitToSwap",
+              "outputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "",
+                  "type": "uint256"
+                }
+              ],
+              "stateMutability": "nonpayable",
+              "type": "function"
+            },
+            {
+              "inputs": [
+                {
+                  "internalType": "contract IERC20",
+                  "name": "_inToken",
+                  "type": "address"
+                },
+                {
+                  "internalType": "contract IERC20",
+                  "name": "_outToken",
+                  "type": "address"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "_inTokens",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "_outTokens",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "address",
+                  "name": "_tokenOutParty",
+                  "type": "address"
+                }
+              ],
+              "name": "createNewSwap",
+              "outputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "",
+                  "type": "uint256"
+                }
+              ],
+              "stateMutability": "nonpayable",
+              "type": "function"
+            },
+            {
+              "inputs": [],
+              "name": "swapId",
+              "outputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "_value",
+                  "type": "uint256"
+                }
+              ],
+              "stateMutability": "view",
+              "type": "function"
+            },
+            {
+              "inputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "",
+                  "type": "uint256"
+                }
+              ],
+              "name": "swaps",
+              "outputs": [
+                {
+                  "internalType": "contract IERC20",
+                  "name": "inToken",
+                  "type": "address"
+                },
+                {
+                  "internalType": "contract IERC20",
+                  "name": "outToken",
+                  "type": "address"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "tokensIn",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "tokensOut",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "address",
+                  "name": "inTokenParty",
+                  "type": "address"
+                },
+                {
+                  "internalType": "address",
+                  "name": "outTokenParty",
+                  "type": "address"
+                },
+                {
+                  "internalType": "bool",
+                  "name": "status",
+                  "type": "bool"
+                }
+              ],
+              "stateMutability": "view",
+              "type": "function"
+            }
+          ]
+        }
+      }
+    }
+  }
+}
