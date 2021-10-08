@@ -5,10 +5,12 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 contract MoonSwap is ReentrancyGuard {
     using SafeERC20 for IERC20;
     using Counters for Counters.Counter;
+    using EnumerableSet for EnumerableSet.UintSet;
 
     struct Swap {
         IERC20 inToken;
@@ -21,8 +23,10 @@ contract MoonSwap is ReentrancyGuard {
     }
 
     Counters.Counter public swapId;
+    EnumerableSet.UintSet private activeSwaps;
     mapping(uint256 => Swap) public swaps;
     mapping(address => uint256) public claimableFees;
+
     address public admin;
 
     constructor() {
@@ -53,6 +57,7 @@ contract MoonSwap is ReentrancyGuard {
             _tokenOutParty, // tokensOutParty
             false // status
         );
+        activeSwaps.add(swapId.current());
         swaps[swapId.current()] = newSwap;
         swapId.increment();
         return swapId.current() - 1;
@@ -67,8 +72,13 @@ contract MoonSwap is ReentrancyGuard {
         uint256 fee = (5*_outTokens)/1000;
         claimableFees[address(newSwap.outToken)] += fee;
         delete swaps[_swapId]; // get those sweet gas refunds!
+        activeSwaps.remove(_swapId);
         newSwap.outToken.safeTransfer(newSwap.inTokenParty, _outTokens - fee);
         newSwap.inToken.safeTransfer(msg.sender, newSwap.tokensIn);
         return newSwap.tokensIn;
+    }
+
+    function getActiveSwaps() external view returns(uint256[] memory) {
+        return activeSwaps.values();
     }
 }
