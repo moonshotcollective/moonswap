@@ -29,6 +29,17 @@ contract MoonSwap is ReentrancyGuard {
 
     address public admin;
 
+    event NewSwap(
+        uint256 indexed id,
+        address inToken,
+        address outToken,
+        uint256 inTokens,
+        uint256 outTokens,
+        address inTokenParty,
+        address outTokenParty
+    );
+    event ClosedSwap(uint256 indexed id, address outTokenParty);
+
     constructor() {
         admin = msg.sender;
     }
@@ -55,11 +66,20 @@ contract MoonSwap is ReentrancyGuard {
             _outTokens, // tokensOut
             msg.sender, // tokensInParty
             _tokenOutParty, // tokensOutParty
-            false // status
+            true // status
         );
         activeSwaps.add(swapId.current());
         swaps[swapId.current()] = newSwap;
         swapId.increment();
+        emit NewSwap(
+            swapId.current() - 1,
+            address(_inToken),
+            address(_outToken),
+            _inTokens,
+            _outTokens,
+            msg.sender,
+            _tokenOutParty
+        );
         return swapId.current() - 1;
     }
 
@@ -75,7 +95,8 @@ contract MoonSwap is ReentrancyGuard {
         activeSwaps.remove(_swapId);
         newSwap.outToken.safeTransfer(newSwap.inTokenParty, _outTokens - fee);
         newSwap.inToken.safeTransfer(msg.sender, newSwap.tokensIn);
-        return newSwap.tokensIn;
+        emit ClosedSwap(_swapId, msg.sender);
+        return _outTokens;
     }
 
     function getActiveSwaps() external view returns(uint256[] memory) {
