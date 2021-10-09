@@ -27,47 +27,88 @@ describe("Test creating and committing to a swap", function () {
 
   describe("DummyERC20", function () {
     it("Should deploy DummyERC20 (outToken)", async function () {
-      const DummyErc20Out = await ethers.getContractFactory("DummyERC20");
+      const accounts = await ethers.getSigners();
+      const DummyErc20Out = await ethers.getContractFactory(
+        "DummyERC20",
+        accounts[1]
+      );
 
       dummyErc20Out = await DummyErc20Out.deploy();
     });
   });
 
+  const tokensIn = ethers.utils.parseUnits("1"); // 1 ether
+  const tokensOut = ethers.utils.parseUnits("2"); // 2 ethers
+  const swapId = 0;
+
   describe("createNewSwap()", function () {
-    const tokensIn = ethers.utils.parseUnits("1"); // 1 ether
-    const tokensOut = ethers.utils.parseUnits("2"); // 2 ethers
     it("Approve inToken transfer", async function () {
-      await dummyErc20In.approve(
-        moonSwapV1.address,
-        ethers.utils.parseUnits("1")
-      );
+      await dummyErc20In.approve(moonSwapV1.address, tokensIn);
     });
     it("Create a new swap", async function () {
-      const accounts = await hre.ethers.getSigners();
+      const accounts = await ethers.getSigners();
       await moonSwapV1.createNewSwap(
         dummyErc20In.address,
         dummyErc20Out.address,
         tokensIn,
         tokensOut,
-        accounts[0].address
+        accounts[1].address
       );
     });
     it("Check if swap details are accurate", async function () {
-      const accounts = await hre.ethers.getSigners();
-      const swapInfo = await moonSwapV1.swaps(0);
-      expect(swapInfo.inToken).to.equal(dummyErc20In.address);
-      expect(swapInfo.outToken).to.equal(dummyErc20Out.address);
-      expect(swapInfo.tokensIn).to.equal(
+      const accounts = await ethers.getSigners();
+      const swapInfo = await moonSwapV1.swaps(swapId);
+      await expect(swapInfo.inToken).to.equal(dummyErc20In.address);
+      await expect(swapInfo.outToken).to.equal(dummyErc20Out.address);
+      await expect(swapInfo.tokensIn).to.equal(
         tokensIn.sub(tokensIn.mul(5).div(1000))
       ); // tokensIn - 0.5% fee
-      expect(swapInfo.tokensOut).to.equal(tokensOut);
-      expect(swapInfo.inTokenParty).to.equal(accounts[0].address);
-      expect(swapInfo.outTokenParty).to.equal(accounts[0].address);
-      expect(swapInfo.status).to.equal(true);
+      await expect(swapInfo.tokensOut).to.equal(tokensOut);
+      await expect(swapInfo.inTokenParty).to.equal(accounts[0].address);
+      await expect(swapInfo.outTokenParty).to.equal(accounts[1].address);
+      await expect(swapInfo.status).to.equal(true);
     });
     it("Check token balance in escrow", async function () {
       const balance = await dummyErc20In.balanceOf(moonSwapV1.address);
-      expect(balance).to.equal(ethers.utils.parseUnits("1"));
+      await expect(balance).to.equal(ethers.utils.parseUnits("1"));
+    });
+  });
+
+  describe("commitToSwap()", function () {
+    it("Approve outToken transfer", async function () {
+      await dummyErc20Out.approve(moonSwapV1.address, tokensOut);
+    });
+    it("Commit unmatched amount", async function () {
+      const accounts = await ethers.getSigners();
+      const moonSwapV1Other = await moonSwapV1.connect(accounts[1]);
+      await expect(
+        moonSwapV1Other.commitToSwap(
+          swapId,
+          tokensOut.sub(ethers.utils.parseUnits("0.1"))
+        )
+      ).to.be.reverted;
+    });
+    it("Commit to existing swap", async function () {
+      const accounts = await ethers.getSigners();
+      const moonSwapV1Other = await moonSwapV1.connect(accounts[1]);
+      await moonSwapV1Other.commitToSwap(swapId, tokensOut);
+    });
+    it("Check user account balances after swap", async function () {
+      const accounts = await ethers.getSigners();
+      await expect(
+        dummyErc20Out.balanceOf(accounts[0].address),
+        tokensOut.sub(tokensOut.mul(5).div(1000))
+      );
+      await expect(
+        dummyErc20In.balanceOf(accounts[1].address),
+        tokensIn.sub(tokensIn.mul(5).div(1000))
+      );
+    });
+    it("Commit to non-existing swap", async function () {
+      const accounts = await ethers.getSigners();
+      const moonSwapV1Other = await moonSwapV1.connect(accounts[1]);
+      await expect(moonSwapV1Other.commitToSwap(swapId + 1, tokensOut)).to.be
+        .reverted;
     });
   });
 });
