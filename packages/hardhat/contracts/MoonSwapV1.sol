@@ -38,7 +38,8 @@ contract MoonSwap is ReentrancyGuard {
         address inTokenParty,
         address outTokenParty
     );
-    event ClosedSwap(uint256 indexed id, address outTokenParty);
+    event RevokeSwap(uint256 indexed id);
+    event CloseSwap(uint256 indexed id, address outTokenParty);
 
     constructor() {
         admin = msg.sender;
@@ -95,8 +96,21 @@ contract MoonSwap is ReentrancyGuard {
         activeSwaps.remove(_swapId);
         newSwap.outToken.safeTransfer(newSwap.inTokenParty, _outTokens - fee);
         newSwap.inToken.safeTransfer(msg.sender, newSwap.tokensIn);
-        emit ClosedSwap(_swapId, msg.sender);
+        emit CloseSwap(_swapId, msg.sender);
         return _outTokens;
+    }
+
+    function revokeSwap(uint256 _swapId) external nonReentrant returns (uint256) {
+        Swap memory swap = swaps[_swapId];
+        require(swap.status, "SWAP_INACTIVE");
+        require(swap.inTokenParty == msg.sender, "UNAUTHORIZED");
+        uint256 returnFee = (5*swap.tokensIn)/1000;
+        claimableFees[address(swap.inToken)] -= returnFee;
+        delete swaps[_swapId]; // get those sweet gas refunds!
+        activeSwaps.remove(_swapId);
+        swap.inToken.safeTransfer(msg.sender, swap.tokensIn + returnFee);
+        emit RevokeSwap(_swapId);
+        return swap.tokensIn + returnFee;
     }
 
     function getActiveSwaps() external view returns(uint256[] memory) {
