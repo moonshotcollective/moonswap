@@ -111,4 +111,35 @@ describe("Test creating and committing to a swap", function () {
         .reverted;
     });
   });
+
+  describe("revokeSwap()", function () {
+    let swapId;
+    it("Approve inToken transfer", async function () {
+      await dummyErc20In.approve(moonSwapV1.address, tokensIn);
+    });
+    it("Create a new swap", async function () {
+      const accounts = await ethers.getSigners();
+      const swapTx = await moonSwapV1.createNewSwap(
+        dummyErc20In.address,
+        dummyErc20Out.address,
+        tokensIn,
+        tokensOut,
+        accounts[1].address
+      );
+      const swapReceipt = await swapTx.wait();
+      swapId = swapReceipt.events[2].args.id;
+    });
+    it("Revoke the swap", async function () {
+      await moonSwapV1.revokeSwap(swapId);
+    });
+    it("Approve outToken transfer", async function () {
+      await dummyErc20Out.approve(moonSwapV1.address, tokensOut);
+    });
+    it("Commit to a revoked swap", async function () {
+      const accounts = await ethers.getSigners();
+      const moonSwapV1Other = await moonSwapV1.connect(accounts[1]);
+      await expect(moonSwapV1Other.commitToSwap(swapId, tokensOut)).to.be
+        .reverted;
+    });
+  });
 });
