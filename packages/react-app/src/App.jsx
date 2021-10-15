@@ -581,6 +581,7 @@ function App(props) {
               purpose={purpose}
               setPurposeEvents={setPurposeEvents}
               isWalletConnected={isWalletConnected}
+              userSigner={userSigner}
             />
           </Route>
           <Route path="/claimfees">

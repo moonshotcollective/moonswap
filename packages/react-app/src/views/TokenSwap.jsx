@@ -3,6 +3,9 @@ import { utils, ethers } from "ethers";
 import { Button, Divider, Input, List, Row, Col, Tabs, Card, Form, Checkbox, notification } from "antd";
 import React, { useState, useEffect } from "react";
 import { Address, Balance, ClaimFees, AddressInput } from "../components";
+import externalContracts from "../contracts/external_contracts";
+
+const ERC20ABI = externalContracts[1].contracts.UNI.abi;
 
 export default function TokenSwap({
   purpose,
@@ -16,11 +19,15 @@ export default function TokenSwap({
   readContracts,
   writeContracts,
   isWalletConnected,
+  userSigner,
 }) {
   const [readyToSwap, setReadyToSwap] = useState();
   const [addressIn, setAddressIn] = useState();
   const [addressOut, setAddressOut] = useState(address);
   const [token, setTokenOut] = useState();
+
+  const [tokenInContract, setTokenInContract] = useState();
+  const [tokenOutContract, setTokenOutContract] = useState();
 
   const getTokenDetails = async ({ token }) => {
     const decimals = await readContracts[token].decimals;
@@ -30,8 +37,8 @@ export default function TokenSwap({
   const approveTokenAllowance = async ({ maxApproval, token }) => {
     // const decimals = await getTokenDetails({ token });
     // FIX: Harcoded decimals value
-    const newAllowance = ethers.utils.parseUnits(maxApproval, 18);
-    const res = await writeContracts.dGTC.approve(readContracts.MoonSwap.address, newAllowance);
+    const newAllowance = ethers.utils.parseUnits(maxApproval, await tokenInContract.decimals());
+    const res = await tokenInContract.approve(readContracts.MoonSwap.address, newAllowance);
     await res.wait(1);
   };
 
@@ -43,6 +50,18 @@ export default function TokenSwap({
         placement: "bottomRight",
       });
     }
+
+    const signer = userSigner;
+
+    console.log("signer", signer);
+
+    const inContract = new ethers.Contract(tokenIn, ERC20ABI, signer);
+    const outContract = new ethers.Contract(tokenOut, ERC20ABI, signer);
+
+    console.log("inContract", inContract);
+
+    setTokenInContract(inContract);
+    setTokenOutContract(outContract);
 
     // Approve the token allowance
     await approveTokenAllowance({ maxApproval: swapValueIn, token: tokenIn });
