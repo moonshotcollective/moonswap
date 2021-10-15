@@ -16,7 +16,7 @@ module.exports = async ({ getNamedAccounts, getChainId, deployments }) => {
   await deploy("MoonSwap", {
     // Learn more about args here: https://www.npmjs.com/package/hardhat-deploy#deploymentsdeploy
     from: deployer,
-    //args: [ "Hello", ethers.utils.parseEther("1.5") ],
+    // args: [ "Hello", ethers.utils.parseEther("1.5") ],
     log: true,
   });
 
