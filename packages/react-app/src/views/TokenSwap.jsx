@@ -1,7 +1,7 @@
 import { SyncOutlined, SettingOutlined, ArrowDownOutlined } from "@ant-design/icons";
-import { utils } from "ethers";
-import { Button, Divider, Input, List, Row, Col, Tabs, Card, Form, Checkbox } from "antd";
-import React, { useState } from "react";
+import { utils, ethers } from "ethers";
+import { Button, Divider, Input, List, Row, Col, Tabs, Card, Form, Checkbox, notification } from "antd";
+import React, { useState, useEffect } from "react";
 import { Address, Balance, ClaimFees, AddressInput } from "../components";
 
 export default function TokenSwap({
@@ -22,7 +22,20 @@ export default function TokenSwap({
   const [addressOut, setAddressOut] = useState(address);
   const [token, setTokenOut] = useState();
 
-  const createNewSwap = ({ tokenIn, swapValueIn, tokenOut, swapValueOut }) => {
+  const getTokenDetails = async ({ token }) => {
+    const decimals = await readContracts[token].decimals;
+    return { decimals };
+  };
+
+  const approveTokenAllowance = async ({ maxApproval, token }) => {
+    // const decimals = await getTokenDetails({ token });
+    // FIX: Harcoded decimals value
+    const newAllowance = ethers.utils.parseUnits(maxApproval, 18);
+    const res = await writeContracts.dGTC.approve(readContracts.MoonSwap.address, newAllowance);
+    await res.wait(1);
+  };
+
+  const createNewSwap = async ({ tokenIn, swapValueIn, tokenOut, swapValueOut }) => {
     if (!isWalletConnected) {
       return notification.error({
         message: "Access request failed",
@@ -30,15 +43,12 @@ export default function TokenSwap({
         placement: "bottomRight",
       });
     }
+
+    // Approve the token allowance
+    await approveTokenAllowance({ maxApproval: swapValueIn, token: tokenIn });
+
     const result = tx(
-      writeContracts.MoonSwap.createNewSwap({
-        addressIn,
-        tokenIn,
-        swapValueIn,
-        addressOut,
-        tokenOut,
-        swapValueOut,
-      }),
+      writeContracts.MoonSwap.createNewSwap(tokenIn, tokenOut, swapValueIn, swapValueOut, addressOut),
       update => {
         console.log("📡 New Swap Created:", update);
         if (update && (update.status === "confirmed" || update.status === 1)) {
