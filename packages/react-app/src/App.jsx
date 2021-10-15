@@ -518,7 +518,25 @@ function App(props) {
         <Switch>
           <Route exact path="/">
             <Contract
-              name="YourContract"
+              name="dGTC"
+              signer={userSigner}
+              provider={localProvider}
+              address={address}
+              blockExplorer={blockExplorer}
+              contractConfig={contractConfig}
+            />
+            <hr />
+            <Contract
+              name="dETH"
+              signer={userSigner}
+              provider={localProvider}
+              address={address}
+              blockExplorer={blockExplorer}
+              contractConfig={contractConfig}
+            />
+            <hr />
+            <Contract
+              name="MoonSwap"
               signer={userSigner}
               provider={localProvider}
               address={address}

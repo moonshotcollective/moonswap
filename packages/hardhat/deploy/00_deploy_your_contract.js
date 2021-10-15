@@ -73,6 +73,11 @@ module.exports = async ({ getNamedAccounts, getChainId, deployments }) => {
       from: deployer,
       log: true,
     });
+
+    await deploy("dETH", {
+      from: deployer,
+      log: true,
+    });
   }
 };
 module.exports.tags = ["MoonSwapV1"];
