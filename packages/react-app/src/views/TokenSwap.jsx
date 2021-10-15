@@ -34,7 +34,7 @@ export default function TokenSwap({
     return { decimals };
   };
 
-  const approveTokenAllowance = async ({ maxApproval, token }) => {
+  const approveTokenAllowance = async ({ maxApproval, token, tokenInContract, tokenOutContract }) => {
     // const decimals = await getTokenDetails({ token });
     // FIX: Harcoded decimals value
     const newAllowance = ethers.utils.parseUnits(maxApproval, await tokenInContract.decimals());
@@ -64,7 +64,12 @@ export default function TokenSwap({
     setTokenOutContract(outContract);
 
     // Approve the token allowance
-    await approveTokenAllowance({ maxApproval: swapValueIn, token: tokenIn });
+    await approveTokenAllowance({
+      maxApproval: swapValueIn,
+      token: tokenIn,
+      tokenInContract: inContract,
+      tokenOutContract: outContract,
+    });
 
     const result = tx(
       writeContracts.MoonSwap.createNewSwap(tokenIn, tokenOut, swapValueIn, swapValueOut, addressOut),
