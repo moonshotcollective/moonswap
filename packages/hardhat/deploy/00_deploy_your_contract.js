@@ -6,6 +6,7 @@ module.exports = async ({ getNamedAccounts, getChainId, deployments }) => {
   const frontendAddress = process.env.FRONTENDADDRESS;
   const receiverAddress = process.env.RECEIVERADDRESS;
 
+
   const { deploy } = deployments;
   const { deployer } = await getNamedAccounts();
   const chainId = await getChainId();
