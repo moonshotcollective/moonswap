@@ -1,10 +1,19 @@
 // deploy/00_deploy_your_contract.js
 
-// const { ethers } = require("hardhat");
+const { ethers } = require("hardhat");
 
-module.exports = async ({ getNamedAccounts, deployments }) => {
+module.exports = async ({ getNamedAccounts, getChainId, deployments }) => {
+  const frontendAddress = process.env.FRONTENDADDRESS;
+  const receiverAddress = process.env.RECEIVERADDRESS;
+
+
   const { deploy } = deployments;
   const { deployer } = await getNamedAccounts();
+  const chainId = await getChainId();
+  const deployerWallet = ethers.provider.getSigner();
+
+  const confirmationRequirement = chainId === "31337" ? 1 : 3;
+
   await deploy("MoonSwap", {
     // Learn more about args here: https://www.npmjs.com/package/hardhat-deploy#deploymentsdeploy
     from: deployer,
@@ -47,5 +56,29 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
    LibraryName: **LibraryAddress**
   });
   */
+  // run this if not for production deployment
+  if (chainId !== "1") {
+    // send test ETH to developer address on localhost
+    const developerAddress = process.env.DEVELOPER;
+
+    if (chainId === "31337" && developerAddress) {
+      const devTransfer = await deployerWallet.sendTransaction({
+        to: developerAddress,
+        value: ethers.utils.parseEther("0.15"),
+      });
+
+      await devTransfer.wait(confirmationRequirement);
+    }
+
+    await deploy("dGTC", {
+      from: deployer,
+      log: true,
+    });
+
+    await deploy("dETH", {
+      from: deployer,
+      log: true,
+    });
+  }
 };
 module.exports.tags = ["MoonSwapV1"];
