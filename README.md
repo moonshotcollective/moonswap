@@ -2,7 +2,7 @@
 
 
 # Mission
-Enable DAOs to swap tokens to encourage long term work partnerships among the parties
+Enable DAOs to swap tokens to create shared interests and long term partnerships
 
 # Get Started
 
