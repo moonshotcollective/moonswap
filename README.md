@@ -1,5 +1,11 @@
 # Moonswap
 
+
+# Mission
+Enable DAOs to swap tokens to encourage long term work partnerships among the parties
+
+# Get Started
+
 Prerequisites: [Node](https://nodejs.org/en/download/) plus [Yarn](https://classic.yarnpkg.com/en/docs/install/) and [Git](https://git-scm.com/downloads)
 
 > clone/fork Moonswap:
