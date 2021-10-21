@@ -2,7 +2,7 @@
 
 
 # Mission
-Enable DAOs to swap tokens to create shared interests and long term partnerships
+Enable Autonomous Organizations to put forth proposals to swap, borrow, lend and stream tokens from their treasuries to empower shared interest and foster long term partnerships between DAO's
 
 # Get Started
 
