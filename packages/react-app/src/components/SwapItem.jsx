@@ -3,7 +3,7 @@ import { useThemeSwitcher } from "react-css-theme-switcher";
 import { Typography } from "antd";
 import { NETWORK } from "../constants";
 
-export default function ClaimFees({ hash, localProvider, chainId, ...props }) {
+export default function SwapItem({ hash, localProvider, chainId, ...props }) {
   const { currentTheme } = useThemeSwitcher();
   const [loading, updateLoading] = useState(true);
   const [txData, updateTxData] = useState({});
@@ -48,11 +48,7 @@ export default function ClaimFees({ hash, localProvider, chainId, ...props }) {
             </a>
           </Typography.Text>
         </div>
-        {loading ? (
-          <div style={{ fontStyle: "italic", color: "#efefef" }}>In Progress...</div>
-        ) : (
-          <div style={{ fontStyle: "normal", fontWeight: "bold", color: "green" }}>Completed</div>
-        )}
+        {loading ? <div style={{ fontStyle: "italic", color: "#efefef" }}>Loading...</div> : <button></button>}
       </div>
     </div>
   );

@@ -43,6 +43,16 @@ function mnemonic() {
   return "";
 }
 
+function getRpc(network) {
+  const infuraKey = process.env[`${network}_INFURA_KEY`] || null;
+
+  // Add environment variable NETWORK_RPC. For example RINKEBY_RPC
+
+  return process.env[`${network}_RPC`]
+    ? process.env[`${network}_RPC`]
+    : `https://${network}.infura.io/v3/${infuraKey}`;
+}
+
 module.exports = {
   defaultNetwork,
 
@@ -64,8 +74,9 @@ module.exports = {
     },
 
     rinkeby: {
-      url: `https://rinkeby.infura.io/v3/${process.env.RINKEBY_INFURA_KEY}`,
-      accounts: [`${process.env.RINKEBY_DEPLOYER_PRIV_KEY}`],
+      // url: `https://rinkeby.infura.io/v3/${process.env.RINKEBY_INFURA_KEY}`,
+      // accounts: [`${process.env.RINKEBY_DEPLOYER_PRIV_KEY}`],
+      url: getRpc("RINKEBY"),
     },
     // kovan: {
     //   url: `https://rinkeby.infura.io/v3/${process.env.KOVAN_INFURA_KEY}`,
