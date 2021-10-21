@@ -92,6 +92,7 @@ export default function TokenSwap({
     let swapId = null;
     if (readContracts?.MoonSwap) {
       swapId = await readContracts.MoonSwap.swapId();
+      tokenOut = await readContracts.MoonSwap.tokenOut();
     }
     const result = tx(writeContracts.MoonSwap.commitToSwap({ swapId, tokenOut }), update => {
       console.log("📡 Swap Committed:", update);

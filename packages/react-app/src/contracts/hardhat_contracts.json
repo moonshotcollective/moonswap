@@ -1,32 +1,18 @@
 {
-  "31337": {
-    "localhost": {
-      "name": "localhost",
-      "chainId": "31337",
+  "4": {
+    "rinkeby": {
+      "name": "rinkeby",
+      "chainId": "4",
       "contracts": {
         "MoonSwap": {
-          "address": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+          "address": "0x8719168f2d330e389429aBB23E71F2D0CCff34DA",
           "abi": [
-            {
-              "inputs": [],
-              "stateMutability": "nonpayable",
-              "type": "constructor"
-            },
+            { "inputs": [], "stateMutability": "nonpayable", "type": "constructor" },
             {
               "anonymous": false,
               "inputs": [
-                {
-                  "indexed": true,
-                  "internalType": "uint256",
-                  "name": "id",
-                  "type": "uint256"
-                },
-                {
-                  "indexed": false,
-                  "internalType": "address",
-                  "name": "outTokenParty",
-                  "type": "address"
-                }
+                { "indexed": true, "internalType": "uint256", "name": "id", "type": "uint256" },
+                { "indexed": false, "internalType": "address", "name": "outTokenParty", "type": "address" }
               ],
               "name": "CloseSwap",
               "type": "event"
@@ -34,263 +20,99 @@
             {
               "anonymous": false,
               "inputs": [
-                {
-                  "indexed": true,
-                  "internalType": "uint256",
-                  "name": "id",
-                  "type": "uint256"
-                },
-                {
-                  "indexed": false,
-                  "internalType": "address",
-                  "name": "inToken",
-                  "type": "address"
-                },
-                {
-                  "indexed": false,
-                  "internalType": "address",
-                  "name": "outToken",
-                  "type": "address"
-                },
-                {
-                  "indexed": false,
-                  "internalType": "uint256",
-                  "name": "inTokens",
-                  "type": "uint256"
-                },
-                {
-                  "indexed": false,
-                  "internalType": "uint256",
-                  "name": "outTokens",
-                  "type": "uint256"
-                },
-                {
-                  "indexed": false,
-                  "internalType": "address",
-                  "name": "inTokenParty",
-                  "type": "address"
-                },
-                {
-                  "indexed": false,
-                  "internalType": "address",
-                  "name": "outTokenParty",
-                  "type": "address"
-                }
+                { "indexed": true, "internalType": "uint256", "name": "id", "type": "uint256" },
+                { "indexed": false, "internalType": "address", "name": "inToken", "type": "address" },
+                { "indexed": false, "internalType": "address", "name": "outToken", "type": "address" },
+                { "indexed": false, "internalType": "uint256", "name": "inTokens", "type": "uint256" },
+                { "indexed": false, "internalType": "uint256", "name": "outTokens", "type": "uint256" },
+                { "indexed": false, "internalType": "address", "name": "inTokenParty", "type": "address" },
+                { "indexed": false, "internalType": "address", "name": "outTokenParty", "type": "address" }
               ],
               "name": "NewSwap",
               "type": "event"
             },
             {
               "anonymous": false,
-              "inputs": [
-                {
-                  "indexed": true,
-                  "internalType": "uint256",
-                  "name": "id",
-                  "type": "uint256"
-                }
-              ],
+              "inputs": [{ "indexed": true, "internalType": "uint256", "name": "id", "type": "uint256" }],
               "name": "RevokeSwap",
               "type": "event"
             },
             {
               "inputs": [],
               "name": "admin",
-              "outputs": [
-                {
-                  "internalType": "address",
-                  "name": "",
-                  "type": "address"
-                }
-              ],
+              "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
               "stateMutability": "view",
               "type": "function"
             },
             {
-              "inputs": [
-                {
-                  "internalType": "contract IERC20",
-                  "name": "_token",
-                  "type": "address"
-                }
-              ],
+              "inputs": [{ "internalType": "contract IERC20", "name": "_token", "type": "address" }],
               "name": "claimFees",
               "outputs": [],
               "stateMutability": "nonpayable",
               "type": "function"
             },
             {
-              "inputs": [
-                {
-                  "internalType": "address",
-                  "name": "",
-                  "type": "address"
-                }
-              ],
+              "inputs": [{ "internalType": "address", "name": "", "type": "address" }],
               "name": "claimableFees",
-              "outputs": [
-                {
-                  "internalType": "uint256",
-                  "name": "",
-                  "type": "uint256"
-                }
-              ],
+              "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
               "stateMutability": "view",
               "type": "function"
             },
             {
               "inputs": [
-                {
-                  "internalType": "uint256",
-                  "name": "_swapId",
-                  "type": "uint256"
-                },
-                {
-                  "internalType": "uint256",
-                  "name": "_outTokens",
-                  "type": "uint256"
-                }
+                { "internalType": "uint256", "name": "_swapId", "type": "uint256" },
+                { "internalType": "uint256", "name": "_outTokens", "type": "uint256" }
               ],
               "name": "commitToSwap",
-              "outputs": [
-                {
-                  "internalType": "uint256",
-                  "name": "",
-                  "type": "uint256"
-                }
-              ],
+              "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
               "stateMutability": "nonpayable",
               "type": "function"
             },
             {
               "inputs": [
-                {
-                  "internalType": "contract IERC20",
-                  "name": "_inToken",
-                  "type": "address"
-                },
-                {
-                  "internalType": "contract IERC20",
-                  "name": "_outToken",
-                  "type": "address"
-                },
-                {
-                  "internalType": "uint256",
-                  "name": "_inTokens",
-                  "type": "uint256"
-                },
-                {
-                  "internalType": "uint256",
-                  "name": "_outTokens",
-                  "type": "uint256"
-                },
-                {
-                  "internalType": "address",
-                  "name": "_tokenOutParty",
-                  "type": "address"
-                }
+                { "internalType": "contract IERC20", "name": "_inToken", "type": "address" },
+                { "internalType": "contract IERC20", "name": "_outToken", "type": "address" },
+                { "internalType": "uint256", "name": "_inTokens", "type": "uint256" },
+                { "internalType": "uint256", "name": "_outTokens", "type": "uint256" },
+                { "internalType": "address", "name": "_tokenOutParty", "type": "address" }
               ],
               "name": "createNewSwap",
-              "outputs": [
-                {
-                  "internalType": "uint256",
-                  "name": "",
-                  "type": "uint256"
-                }
-              ],
+              "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
               "stateMutability": "nonpayable",
               "type": "function"
             },
             {
               "inputs": [],
               "name": "getActiveSwaps",
-              "outputs": [
-                {
-                  "internalType": "uint256[]",
-                  "name": "",
-                  "type": "uint256[]"
-                }
-              ],
+              "outputs": [{ "internalType": "uint256[]", "name": "", "type": "uint256[]" }],
               "stateMutability": "view",
               "type": "function"
             },
             {
-              "inputs": [
-                {
-                  "internalType": "uint256",
-                  "name": "_swapId",
-                  "type": "uint256"
-                }
-              ],
+              "inputs": [{ "internalType": "uint256", "name": "_swapId", "type": "uint256" }],
               "name": "revokeSwap",
-              "outputs": [
-                {
-                  "internalType": "uint256",
-                  "name": "",
-                  "type": "uint256"
-                }
-              ],
+              "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
               "stateMutability": "nonpayable",
               "type": "function"
             },
             {
               "inputs": [],
               "name": "swapId",
-              "outputs": [
-                {
-                  "internalType": "uint256",
-                  "name": "_value",
-                  "type": "uint256"
-                }
-              ],
+              "outputs": [{ "internalType": "uint256", "name": "_value", "type": "uint256" }],
               "stateMutability": "view",
               "type": "function"
             },
             {
-              "inputs": [
-                {
-                  "internalType": "uint256",
-                  "name": "",
-                  "type": "uint256"
-                }
-              ],
+              "inputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
               "name": "swaps",
               "outputs": [
-                {
-                  "internalType": "contract IERC20",
-                  "name": "inToken",
-                  "type": "address"
-                },
-                {
-                  "internalType": "contract IERC20",
-                  "name": "outToken",
-                  "type": "address"
-                },
-                {
-                  "internalType": "uint256",
-                  "name": "tokensIn",
-                  "type": "uint256"
-                },
-                {
-                  "internalType": "uint256",
-                  "name": "tokensOut",
-                  "type": "uint256"
-                },
-                {
-                  "internalType": "address",
-                  "name": "inTokenParty",
-                  "type": "address"
-                },
-                {
-                  "internalType": "address",
-                  "name": "outTokenParty",
-                  "type": "address"
-                },
-                {
-                  "internalType": "bool",
-                  "name": "status",
-                  "type": "bool"
-                }
+                { "internalType": "contract IERC20", "name": "inToken", "type": "address" },
+                { "internalType": "contract IERC20", "name": "outToken", "type": "address" },
+                { "internalType": "uint256", "name": "tokensIn", "type": "uint256" },
+                { "internalType": "uint256", "name": "tokensOut", "type": "uint256" },
+                { "internalType": "address", "name": "inTokenParty", "type": "address" },
+                { "internalType": "address", "name": "outTokenParty", "type": "address" },
+                { "internalType": "bool", "name": "status", "type": "bool" }
               ],
               "stateMutability": "view",
               "type": "function"
@@ -298,7 +120,7 @@
           ]
         },
         "dGTC": {
-          "address": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
+          "address": "0xE0F028C08852D70243BD7c6EF030bCf6049e6d98",
           "abi": [
             {
               "inputs": [],
@@ -591,7 +413,7 @@
           ]
         },
         "dETH": {
-          "address": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
+          "address": "0x1d269Cf95A2732ce98fAaF909642D756b59Af0aF",
           "abi": [
             {
               "inputs": [],
