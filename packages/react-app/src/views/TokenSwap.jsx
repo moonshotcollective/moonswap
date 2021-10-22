@@ -4,6 +4,7 @@ import { Button, Divider, Input, List, Row, Col, Tabs, Card, Form, Checkbox, not
 import React, { useState, useEffect } from "react";
 import { Address, Balance, ClaimFees, AddressInput } from "../components";
 import externalContracts from "../contracts/external_contracts";
+import { useParams } from "react-router-dom";
 
 const ERC20ABI = externalContracts[1].contracts.UNI.abi;
 
@@ -22,6 +23,7 @@ export default function TokenSwap({
   userSigner,
   chainId,
 }) {
+  const { id } = useParams();
   const [readyToSwap, setReadyToSwap] = useState();
   const [addressIn, setAddressIn] = useState();
   const [addressOut, setAddressOut] = useState(address);
@@ -34,6 +36,25 @@ export default function TokenSwap({
 
   const [tokenInContract, setTokenInContract] = useState();
   const [tokenOutContract, setTokenOutContract] = useState();
+
+  useEffect(() => {
+    if (id) {
+      console.log("id: ", id);
+      setReadyToSwap(true);
+      setCommitSwapId(id);
+
+      getSwapData(id);
+    }
+  }, [id, readContracts]);
+
+  const getSwapData = async id => {
+    if (readContracts && readContracts.MoonSwap) {
+      const swapData = await readContracts.MoonSwap.swaps(id);
+      setNumTokensOut(swapData.tokensOut.toNumber());
+      setTokenOutAddress(swapData.outToken.toString());
+      console.log("swapData: ", swapData);
+    }
+  };
 
   const getTokenDetails = async ({ token }) => {
     const decimals = await readContracts[token].decimals;
@@ -115,7 +136,7 @@ export default function TokenSwap({
     const signer = userSigner;
     const outContract = new ethers.Contract(tokenOutAddress, ERC20ABI, signer);
 
-    await approveTokenAllowance({ maxApproval: tokenOut, tokenInContract: outContract });
+    await approveTokenAllowance({ maxApproval: tokenOut.toString(), tokenInContract: outContract });
 
     const result = tx(writeContracts.MoonSwap.commitToSwap(currentSwapId, tokenOut), update => {
       console.log("📡 Swap Complete:", update);
@@ -254,7 +275,7 @@ export default function TokenSwap({
               <Row>
                 <Col span={16}>
                   <Form.Item label="Swap Id" name="swapId">
-                    {/* <p>{commitSwapId}</p> */}
+                    <p>{commitSwapId}</p>
                   </Form.Item>
                   <Form.Item label="Token Out" name="tokenOut">
                     <p>{numTokensOut} </p>

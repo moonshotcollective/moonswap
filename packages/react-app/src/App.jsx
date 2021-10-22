@@ -55,7 +55,7 @@ const { ethers } = require("ethers");
 const targetNetwork = process.env.REACT_APP_NETWORK ? NETWORKS[process.env.REACT_APP_NETWORK] : NETWORKS.localhost; // <------- select your target frontend network (localhost, rinkeby, xdai, mainnet)
 
 // 😬 Sorry for all the console logging
-const DEBUG = true;
+const DEBUG = false;
 const NETWORKCHECK = true;
 
 // 🛰 providers
@@ -513,6 +513,24 @@ function App(props) {
             />
           </Route>
           <Route exact path="/swap">
+            <TokenSwap
+              address={address}
+              userSigner={userSigner}
+              mainnetProvider={mainnetProvider}
+              localProvider={localProvider}
+              yourLocalBalance={yourLocalBalance}
+              price={price}
+              tx={tx}
+              writeContracts={writeContracts}
+              readContracts={readContracts}
+              purpose={purpose}
+              setPurposeEvents={setPurposeEvents}
+              isWalletConnected={isWalletConnected}
+              userSigner={userSigner}
+              chainId={selectedChainId}
+            />
+          </Route>
+          <Route path="/swap/:id">
             <TokenSwap
               address={address}
               userSigner={userSigner}
