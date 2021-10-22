@@ -26,7 +26,7 @@ const { isAddress, getAddress, formatUnits, parseUnits } = utils;
 //
 // Select the network you want to deploy to here:
 //
-const defaultNetwork = "hardhat";
+const defaultNetwork = "rinkeby";
 
 const mainnetGwei = 21;
 
@@ -41,6 +41,16 @@ function mnemonic() {
     }
   }
   return "";
+}
+
+function getRpc(network) {
+  const infuraKey = process.env[`${network}_INFURA_KEY`] || null;
+
+  // Add environment variable NETWORK_RPC. For example RINKEBY_RPC
+
+  return process.env[`${network}_RPC`]
+    ? process.env[`${network}_RPC`]
+    : `https://${network}.infura.io/v3/${infuraKey}`;
 }
 
 module.exports = {
@@ -63,10 +73,11 @@ module.exports = {
       */
     },
 
-    // rinkeby: {
-    //   url: `https://rinkeby.infura.io/v3/${process.env.RINKEBY_INFURA_KEY}`,
-    //   accounts: [`${process.env.RINKEBY_DEPLOYER_PRIV_KEY}`],
-    // },
+    rinkeby: {
+      // url: `https://rinkeby.infura.io/v3/${process.env.RINKEBY_INFURA_KEY}`,
+      // accounts: [`${process.env.RINKEBY_DEPLOYER_PRIV_KEY}`],
+      url: getRpc("RINKEBY"),
+    },
     // kovan: {
     //   url: `https://rinkeby.infura.io/v3/${process.env.KOVAN_INFURA_KEY}`,
     //   accounts: [`${process.env.KOVAN_DEPLOYER_PRIV_KEY}`],
@@ -89,14 +100,14 @@ module.exports = {
     //   accounts: [`${process.env.XDAI_DEPLOYER_PRIV_KEY}`],
     // },
 
-    rinkeby: {
-      url: "https://rinkeby.infura.io/v3/460f40a260564ac4a4f4b3fffb032dad", // <---- YOUR INFURA ID! (or it won't work)
+    // rinkeby: {
+    //   url: "https://rinkeby.infura.io/v3/460f40a260564ac4a4f4b3fffb032dad", // <---- YOUR INFURA ID! (or it won't work)
 
-      //    url: "https://speedy-nodes-nyc.moralis.io/XXXXXXXXXXXXXXXXXXXXXXX/eth/rinkeby", // <---- YOUR MORALIS ID! (not limited to infura)
+    //   //    url: "https://speedy-nodes-nyc.moralis.io/XXXXXXXXXXXXXXXXXXXXXXX/eth/rinkeby", // <---- YOUR MORALIS ID! (not limited to infura)
 
-      accounts:
-        process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
-    },
+    //   accounts:
+    //     process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
+    // },
     mainnet: {
       url: "https://mainnet.infura.io/v3/460f40a260564ac4a4f4b3fffb032dad", // <---- YOUR INFURA ID! (or it won't work)
 

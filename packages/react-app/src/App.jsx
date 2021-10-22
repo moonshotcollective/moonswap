@@ -4,7 +4,7 @@ import WalletLink from "walletlink";
 import { Alert, Button, Col, Menu, Row } from "antd";
 import "antd/dist/antd.css";
 import React, { useCallback, useEffect, useState } from "react";
-import { HomeOutlined, ContainerOutlined, QuestionCircleOutlined, DatabaseOutlined } from "@ant-design/icons";
+import { HomeOutlined, ContainerOutlined, InteractionOutlined } from "@ant-design/icons";
 import { BrowserRouter, Link, Route, Switch } from "react-router-dom";
 import Web3Modal from "web3modal";
 import "./App.css";
@@ -22,7 +22,7 @@ import {
 import { useEventListener } from "eth-hooks/events/useEventListener";
 import { useExchangeEthPrice } from "eth-hooks/dapps/dex";
 // import Hints from "./Hints";
-import { ExampleUI, Hints, TokenSwap, ClaimFees } from "./views";
+import { TokenSwap, SwapList } from "./views";
 
 import { useContractConfig } from "./hooks";
 
@@ -55,7 +55,7 @@ const { ethers } = require("ethers");
 const targetNetwork = process.env.REACT_APP_NETWORK ? NETWORKS[process.env.REACT_APP_NETWORK] : NETWORKS.localhost; // <------- select your target frontend network (localhost, rinkeby, xdai, mainnet)
 
 // 😬 Sorry for all the console logging
-const DEBUG = true;
+const DEBUG = false;
 const NETWORKCHECK = true;
 
 // 🛰 providers
@@ -453,26 +453,6 @@ function App(props) {
       <Header />
       <BrowserRouter>
         <Menu style={{ textAlign: "center" }} selectedKeys={[route]} mode="horizontal">
-          <Menu.Item key="/swap">
-            <Link
-              onClick={() => {
-                setRoute("/swap");
-              }}
-              to="/swap"
-            >
-              <HomeOutlined /> Home
-            </Link>
-          </Menu.Item>
-          <Menu.Item key="/claimfees">
-            <Link
-              onClick={() => {
-                setRoute("/claimfees");
-              }}
-              to="/claimfees"
-            >
-              <DatabaseOutlined /> Claim Fees
-            </Link>
-          </Menu.Item>
           <Menu.Item key="/">
             <Link
               onClick={() => {
@@ -480,27 +460,27 @@ function App(props) {
               }}
               to="/"
             >
+              <HomeOutlined /> Home
+            </Link>
+          </Menu.Item>
+          <Menu.Item key="/swap">
+            <Link
+              onClick={() => {
+                setRoute("/swap");
+              }}
+              to="/swap"
+            >
+              <InteractionOutlined /> Swap
+            </Link>
+          </Menu.Item>
+          <Menu.Item key="/contracts">
+            <Link
+              onClick={() => {
+                setRoute("/contracts");
+              }}
+              to="/contracts"
+            >
               <ContainerOutlined /> Contracts
-            </Link>
-          </Menu.Item>
-          <Menu.Item key="/hints">
-            <Link
-              onClick={() => {
-                setRoute("/hints");
-              }}
-              to="/hints"
-            >
-              <QuestionCircleOutlined /> Hints
-            </Link>
-          </Menu.Item>
-          <Menu.Item key="/exampleui">
-            <Link
-              onClick={() => {
-                setRoute("/exampleui");
-              }}
-              to="/exampleui"
-            >
-              ExampleUI
             </Link>
           </Menu.Item>
           <Menu.Item key="/mainnetdai">
@@ -517,6 +497,58 @@ function App(props) {
 
         <Switch>
           <Route exact path="/">
+            <SwapList
+              address={address}
+              userSigner={userSigner}
+              mainnetProvider={mainnetProvider}
+              localProvider={localProvider}
+              yourLocalBalance={yourLocalBalance}
+              price={price}
+              tx={tx}
+              writeContracts={writeContracts}
+              readContracts={readContracts}
+              purpose={purpose}
+              setPurposeEvents={setPurposeEvents}
+              chainId={selectedChainId}
+            />
+          </Route>
+          <Route exact path="/swap">
+            <TokenSwap
+              address={address}
+              userSigner={userSigner}
+              mainnetProvider={mainnetProvider}
+              localProvider={localProvider}
+              yourLocalBalance={yourLocalBalance}
+              price={price}
+              tx={tx}
+              writeContracts={writeContracts}
+              readContracts={readContracts}
+              purpose={purpose}
+              setPurposeEvents={setPurposeEvents}
+              isWalletConnected={isWalletConnected}
+              userSigner={userSigner}
+              chainId={selectedChainId}
+            />
+          </Route>
+          <Route path="/swap/:id">
+            <TokenSwap
+              address={address}
+              userSigner={userSigner}
+              mainnetProvider={mainnetProvider}
+              localProvider={localProvider}
+              yourLocalBalance={yourLocalBalance}
+              price={price}
+              tx={tx}
+              writeContracts={writeContracts}
+              readContracts={readContracts}
+              purpose={purpose}
+              setPurposeEvents={setPurposeEvents}
+              isWalletConnected={isWalletConnected}
+              userSigner={userSigner}
+              chainId={selectedChainId}
+            />
+          </Route>
+          <Route exact path="/contracts">
             <Contract
               name="dGTC"
               signer={userSigner}
@@ -544,62 +576,7 @@ function App(props) {
               contractConfig={contractConfig}
             />
           </Route>
-          <Route path="/hints">
-            <Hints
-              address={address}
-              yourLocalBalance={yourLocalBalance}
-              mainnetProvider={mainnetProvider}
-              price={price}
-            />
-          </Route>
-          <Route path="/exampleui">
-            <ExampleUI
-              address={address}
-              userSigner={userSigner}
-              mainnetProvider={mainnetProvider}
-              localProvider={localProvider}
-              yourLocalBalance={yourLocalBalance}
-              price={price}
-              tx={tx}
-              writeContracts={writeContracts}
-              readContracts={readContracts}
-              purpose={purpose}
-              setPurposeEvents={setPurposeEvents}
-            />
-          </Route>
-          <Route path="/swap">
-            <TokenSwap
-              address={address}
-              userSigner={userSigner}
-              mainnetProvider={mainnetProvider}
-              localProvider={localProvider}
-              yourLocalBalance={yourLocalBalance}
-              price={price}
-              tx={tx}
-              writeContracts={writeContracts}
-              readContracts={readContracts}
-              purpose={purpose}
-              setPurposeEvents={setPurposeEvents}
-              isWalletConnected={isWalletConnected}
-              userSigner={userSigner}
-            />
-          </Route>
-          <Route path="/claimfees">
-            <ClaimFees
-              address={address}
-              userSigner={userSigner}
-              mainnetProvider={mainnetProvider}
-              localProvider={localProvider}
-              yourLocalBalance={yourLocalBalance}
-              price={price}
-              tx={tx}
-              writeContracts={writeContracts}
-              readContracts={readContracts}
-              purpose={purpose}
-              setPurposeEvents={setPurposeEvents}
-            />
-          </Route>
-          <Route path="/mainnetdai">
+          <Route exact path="/mainnetdai">
             <Contract
               name="DAI"
               customContract={mainnetContracts && mainnetContracts.contracts && mainnetContracts.contracts.DAI}

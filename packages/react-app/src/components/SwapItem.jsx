@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { useThemeSwitcher } from "react-css-theme-switcher";
-import { Typography } from "antd";
+import { Typography, Button } from "antd";
 import { NETWORK } from "../constants";
 
-export default function ClaimFees({ hash, localProvider, chainId, ...props }) {
+export default function SwapItem({ onClick, hash, localProvider, chainId, ...props }) {
   const { currentTheme } = useThemeSwitcher();
   const [loading, updateLoading] = useState(true);
   const [txData, updateTxData] = useState({});
@@ -44,15 +44,12 @@ export default function ClaimFees({ hash, localProvider, chainId, ...props }) {
               href={`${explorer}tx/${hash}`}
               rel="noopener noreferrer"
             >
-              {hash.substr(0, 10)}
+              {hash}
             </a>
           </Typography.Text>
+          <Button onClick={onClick}>Commit Swap</Button>
         </div>
-        {loading ? (
-          <div style={{ fontStyle: "italic", color: "#efefef" }}>In Progress...</div>
-        ) : (
-          <div style={{ fontStyle: "normal", fontWeight: "bold", color: "green" }}>Completed</div>
-        )}
+        {loading ? <div style={{ fontStyle: "italic", color: "#efefef" }}>Loading...</div> : <button></button>}
       </div>
     </div>
   );
