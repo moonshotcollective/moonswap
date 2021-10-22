@@ -6,6 +6,7 @@ import "antd/dist/antd.css";
 import React, { useCallback, useEffect, useState } from "react";
 import { HomeOutlined, ContainerOutlined, QuestionCircleOutlined, DatabaseOutlined } from "@ant-design/icons";
 import { BrowserRouter, Link, Route, Switch } from "react-router-dom";
+import AllSwaps from "./views/AllSwaps";
 import Web3Modal from "web3modal";
 import "./App.css";
 import { Account, Contract, Faucet, GasGauge, Header, Ramp, ThemeSwitch } from "./components";
@@ -568,6 +569,7 @@ function App(props) {
             />
           </Route>
           <Route path="/swap">
+            <AllSwaps readContracts={readContracts} />
             <TokenSwap
               address={address}
               userSigner={userSigner}
