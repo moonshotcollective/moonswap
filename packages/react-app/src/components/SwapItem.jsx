@@ -3,7 +3,7 @@ import { useThemeSwitcher } from "react-css-theme-switcher";
 import { Typography, Button } from "antd";
 import { NETWORK } from "../constants";
 
-export default function SwapItem({ onClick, hash, localProvider, chainId, ...props }) {
+export default function SwapItem({ onClick, hash, index, localProvider, chainId, ...props }) {
   const { currentTheme } = useThemeSwitcher();
   const [loading, updateLoading] = useState(true);
   const [txData, updateTxData] = useState({});
@@ -36,7 +36,8 @@ export default function SwapItem({ onClick, hash, localProvider, chainId, ...pro
           fontSize: props.fontSize ? props.fontSize : 20,
         }}
       >
-        <div>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%" }}>
+          <Typography>{index}</Typography>
           <Typography.Text copyable={{ text: hash }}>
             <a
               style={{ color: currentTheme === "light" ? "#222222" : "#ddd" }}
@@ -49,7 +50,6 @@ export default function SwapItem({ onClick, hash, localProvider, chainId, ...pro
           </Typography.Text>
           <Button onClick={onClick}>Commit Swap</Button>
         </div>
-        {loading ? <div style={{ fontStyle: "italic", color: "#efefef" }}>Loading...</div> : <button></button>}
       </div>
     </div>
   );
