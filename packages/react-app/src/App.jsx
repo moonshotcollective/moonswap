@@ -569,7 +569,7 @@ function App(props) {
             />
           </Route>
           <Route path="/swap">
-            <AllSwaps readContracts={readContracts} />
+            <AllSwaps readContracts={readContracts} localProvider={localProvider} chainId={selectedChainId} />
             <TokenSwap
               address={address}
               userSigner={userSigner}

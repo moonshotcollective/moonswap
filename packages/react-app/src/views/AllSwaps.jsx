@@ -1,16 +1,18 @@
+import { utils } from "ethers";
 import React, { useEffect, useState } from "react";
+import ClaimFees from "../components/ClaimFees";
 
-const AllSwaps = ({ readContracts }) => {
+const AllSwaps = ({ readContracts, localProvider, chainId }) => {
   const [activeSwaps, setActiveSwaps] = useState(null);
   useEffect(() => {
     if (readContracts?.MoonSwap) {
       const getAllSwaps = async () => {
         const allSwaps = await readContracts.MoonSwap.getActiveSwaps();
-        setActiveSwaps(allSwaps);
-        // console.log("allSwaps: ", allSwaps);
-        allSwaps.forEach(swap => {
-          console.log("swap: ", swap);
+        const swapArray = [];
+        allSwaps.map(swap => {
+          swapArray.push(utils.keccak256(swap));
         });
+        setActiveSwaps(swapArray);
       };
       getAllSwaps();
     }
@@ -19,13 +21,11 @@ const AllSwaps = ({ readContracts }) => {
     <div>
       <h1>All active Swaps</h1>
       {activeSwaps &&
-        activeSwaps.map(swap => {
-          return (
-            <div key={swap}>
-              <p>{swap._hex}</p>
-            </div>
-          );
-        })}
+        activeSwaps.map(swap => (
+          <div style={{ margin: "1rem" }} key={swap}>
+            <ClaimFees hash={swap} localProvider={localProvider} chainId={chainId} />
+          </div>
+        ))}
     </div>
   );
 };
