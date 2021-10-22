@@ -20,7 +20,7 @@ export default function SwapList({
   chainId,
 }) {
   const history = useHistory();
-  const { id } = useParams();
+
   const [activeSwaps, setActiveSwaps] = useState([]);
   const [swapIds, setSwapIds] = useState([]);
 
@@ -41,6 +41,14 @@ export default function SwapList({
     }
   };
 
+  useEffect(() => {
+    console.log("active Swaps", activeSwaps);
+  }, []);
+
+  useEffect(() => {
+    console.log("readContract", readContracts);
+  }, []);
+
   useEffect(async () => {
     getActiveSwaps();
   }, [activeSwaps]);
@@ -57,9 +65,11 @@ export default function SwapList({
                 <div
                   style={{
                     width: "80%",
+                    margin: "auto",
                   }}
                 >
                   <SwapItem
+                    index={swapIds[index]}
                     onClick={() => {
                       history.push(`/swap/${swapIds[index]}`);
                     }}

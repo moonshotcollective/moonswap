@@ -497,20 +497,24 @@ function App(props) {
 
         <Switch>
           <Route exact path="/">
-            <SwapList
-              address={address}
-              userSigner={userSigner}
-              mainnetProvider={mainnetProvider}
-              localProvider={localProvider}
-              yourLocalBalance={yourLocalBalance}
-              price={price}
-              tx={tx}
-              writeContracts={writeContracts}
-              readContracts={readContracts}
-              purpose={purpose}
-              setPurposeEvents={setPurposeEvents}
-              chainId={selectedChainId}
-            />
+            {readContracts.MoonSwap ? (
+              <SwapList
+                address={address}
+                userSigner={userSigner}
+                mainnetProvider={mainnetProvider}
+                localProvider={localProvider}
+                yourLocalBalance={yourLocalBalance}
+                price={price}
+                tx={tx}
+                writeContracts={writeContracts}
+                readContracts={readContracts}
+                purpose={purpose}
+                setPurposeEvents={setPurposeEvents}
+                chainId={selectedChainId}
+              />
+            ) : (
+              <h1>Loading...</h1>
+            )}
           </Route>
           <Route exact path="/swap">
             <TokenSwap
