@@ -1,10 +1,11 @@
 import { SyncOutlined, SettingOutlined, ArrowDownOutlined } from "@ant-design/icons";
 import { utils, ethers } from "ethers";
-import { Button, Divider, Input, List, Row, Col, Tabs, Card, Form, Checkbox, notification } from "antd";
+import { Button, Divider, Input, List, Row, Col, Tabs, Card, Form, Checkbox, notification, Steps } from "antd";
 import React, { useState, useEffect } from "react";
 import { Address, Balance, ClaimFees, AddressInput } from "../components";
 import externalContracts from "../contracts/external_contracts";
-import { useParams, useHistory } from "react-router-dom";
+import { useParams, useHistory, Link } from "react-router-dom";
+const { Step } = Steps;
 
 const ERC20ABI = externalContracts[1].contracts.UNI.abi;
 
@@ -34,6 +35,8 @@ export default function TokenSwap({
   const [activeSwaps, setActiveSwaps] = useState();
   const [tokenInAddress, setTokenInAddress] = useState();
   const [tokenOutAddress, setTokenOutAddress] = useState();
+  const [swapStep, setSwapStep] = useState();
+  const [swapComplete, setSwapComplete] = useState();
 
   const [tokenInContract, setTokenInContract] = useState();
   const [tokenOutContract, setTokenOutContract] = useState();
@@ -49,6 +52,16 @@ export default function TokenSwap({
       getSwapData(id);
     }
   }, [id, readContracts]);
+
+  useEffect(() => {
+    if (window.location.href.endsWith("/swap")) {
+      setSwapStep(0);
+    } else if (notFound) {
+      setSwapStep(2);
+    } else {
+      setSwapStep(1);
+    }
+  }, []);
 
   const getSwapData = async id => {
     if (readContracts && readContracts.MoonSwap) {
@@ -124,6 +137,7 @@ export default function TokenSwap({
           console.log("📡 New Swap Created:", update);
           setReadyToSwap(true);
           setNumTokensOut(swapValueOut);
+          setSwapStep(1);
           notification.success({
             message: "Ready to Commit To Swap",
             description: "successful",
@@ -150,6 +164,8 @@ export default function TokenSwap({
       console.log("📡 Swap Complete:", update);
       if (update && (update.status === "confirmed" || update.status === 1)) {
         setReadyToSwap(false);
+        setSwapComplete(true);
+        setSwapStep(2);
         console.log(" 🍾 Swap finished!");
         notification.success({
           message: "Swap Complete",
@@ -191,31 +207,39 @@ export default function TokenSwap({
       }}
     >
       <div>
-        {!readyToSwap && <h2 style={{ float: "left", marginLeft: 10 }}>START SWAP</h2>}
-        {readyToSwap && commitSwapId && numTokensOut && (
-          <h2 style={{ float: "left", marginLeft: 10 }}>COMMIT TO SWAP</h2>
-        )}
-        <a style={{ float: "right" }}>
-          <Button
-            onClick={() => {
-              /* look how we call setPurpose AND send some value along */
-              // tx(
-              //   writeContracts.YourContract.setPurpose("💵 Paying for this one!", {
-              //     value: utils.parseEther("0.001"),
-              //   }),
-              // );
-              console.log("Three dots clicked");
-              /* this will fail until you make the setPurpose function payable */
-            }}
-            type="primary"
-          >
-            ...
-          </Button>
-        </a>
+        <Row>
+          <Col span={12}>
+            {!readyToSwap && <h2 style={{ float: "left", marginLeft: 10 }}>START SWAP</h2>}
+            {readyToSwap && commitSwapId && numTokensOut && (
+              <h2 style={{ float: "left", marginLeft: 10 }}>COMMIT TO SWAP</h2>
+            )}
+          </Col>
+          <Col span={12}>
+            <Button
+              onClick={() => {
+                setCommitSwapId(null);
+                setTokenOut(null);
+                setReadyToSwap(false);
+                setSwapStep(0);
+              }}
+              style={{ float: "right" }}
+              type="primary"
+            >
+              <Link to="/swap">Open New Swap</Link>
+            </Button>
+          </Col>
+        </Row>
+        <Row style={{ marginTop: 10 }}>
+          <Steps current={swapStep}>
+            <Step title="Create New Swap" />
+            <Step title="Commit To Swap" />
+            <Step title="Swap Complete" />
+          </Steps>
+        </Row>
       </div>
 
       <div style={{ margin: 8 }}>
-        {!readyToSwap && (
+        {!readyToSwap && !swapComplete && (
           <Form name="join_room" onFinish={createNewSwap}>
             <div
               style={{
@@ -287,7 +311,7 @@ export default function TokenSwap({
           </Form>
         )}
         {notFound && <div>Swap already completed or inactive.</div>}
-        {!notFound && readyToSwap && commitSwapId && numTokensOut && (
+        {!notFound && !swapComplete && readyToSwap && commitSwapId && numTokensOut && (
           <Form name="join_room" onFinish={commitToSwap}>
             <div
               style={{
@@ -317,6 +341,7 @@ export default function TokenSwap({
             </Form.Item>
           </Form>
         )}
+        {swapComplete && <p>Swap Complete</p>}
       </div>
     </div>
   );
