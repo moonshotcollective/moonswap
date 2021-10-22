@@ -4,6 +4,7 @@ import { Button, Divider, Input, List, Row, Col, Tabs, Card, Form, Checkbox, not
 import React, { useState, useEffect } from "react";
 import { Address, Balance, ClaimFees, AddressInput } from "../components";
 import externalContracts from "../contracts/external_contracts";
+import { useParams, useHistory } from "react-router-dom";
 
 const ERC20ABI = externalContracts[1].contracts.UNI.abi;
 
@@ -22,6 +23,8 @@ export default function TokenSwap({
   userSigner,
   chainId,
 }) {
+  const { id } = useParams();
+  const history = useHistory();
   const [readyToSwap, setReadyToSwap] = useState();
   const [addressIn, setAddressIn] = useState();
   const [addressOut, setAddressOut] = useState(address);
@@ -29,9 +32,36 @@ export default function TokenSwap({
   const [numTokensOut, setNumTokensOut] = useState();
   const [commitSwapId, setCommitSwapId] = useState();
   const [activeSwaps, setActiveSwaps] = useState();
+  const [tokenInAddress, setTokenInAddress] = useState();
+  const [tokenOutAddress, setTokenOutAddress] = useState();
 
   const [tokenInContract, setTokenInContract] = useState();
   const [tokenOutContract, setTokenOutContract] = useState();
+
+  const [notFound, setNotFound] = useState(false);
+
+  useEffect(() => {
+    if (id) {
+      console.log("id: ", id);
+      setReadyToSwap(true);
+      setCommitSwapId(id);
+
+      getSwapData(id);
+    }
+  }, [id, readContracts]);
+
+  const getSwapData = async id => {
+    if (readContracts && readContracts.MoonSwap) {
+      const swapData = await readContracts.MoonSwap.swaps(id);
+      const status = swapData.status;
+      if (!status) {
+        setNotFound(true);
+      }
+      setNumTokensOut(swapData.tokensOut.toNumber());
+      setTokenOutAddress(swapData.outToken.toString());
+      console.log("swapData: ", swapData);
+    }
+  };
 
   const getTokenDetails = async ({ token }) => {
     const decimals = await readContracts[token].decimals;
@@ -43,11 +73,13 @@ export default function TokenSwap({
     if (readContracts?.MoonSwap) {
       swaps = await readContracts.MoonSwap.getActiveSwaps();
       const latestSwap = swaps[swaps.length - 1];
-      setCommitSwapId(utils.keccak256(latestSwap));
+      console.log("latestSwap: ", latestSwap.toNumber());
+      history.push(`/swap/${latestSwap.toNumber()}`);
+      setCommitSwapId(latestSwap.toNumber());
     }
   };
 
-  const approveTokenAllowance = async ({ maxApproval, token, tokenInContract, tokenOutContract }) => {
+  const approveTokenAllowance = async ({ maxApproval, tokenInContract }) => {
     // const decimals = await getTokenDetails({ token });
     // FIX: Harcoded decimals value
     const newAllowance = ethers.utils.parseUnits(maxApproval, await tokenInContract.decimals());
@@ -56,6 +88,8 @@ export default function TokenSwap({
   };
 
   const createNewSwap = async ({ tokenIn, swapValueIn, tokenOut, swapValueOut }) => {
+    setTokenInAddress(tokenIn);
+    setTokenOutAddress(tokenOut);
     if (!isWalletConnected) {
       return notification.error({
         message: "Access request failed",
@@ -79,9 +113,7 @@ export default function TokenSwap({
     // Approve the token allowance
     await approveTokenAllowance({
       maxApproval: swapValueIn,
-      token: tokenIn,
       tokenInContract: inContract,
-      tokenOutContract: outContract,
     });
 
     const result = tx(
@@ -109,6 +141,11 @@ export default function TokenSwap({
     currentSwapId = commitSwapId;
     tokenOut = numTokensOut;
 
+    const signer = userSigner;
+    const outContract = new ethers.Contract(tokenOutAddress, ERC20ABI, signer);
+
+    await approveTokenAllowance({ maxApproval: tokenOut.toString(), tokenInContract: outContract });
+
     const result = tx(writeContracts.MoonSwap.commitToSwap(currentSwapId, tokenOut), update => {
       console.log("📡 Swap Complete:", update);
       if (update && (update.status === "confirmed" || update.status === 1)) {
@@ -122,6 +159,24 @@ export default function TokenSwap({
       }
     });
   };
+
+  if (notFound) {
+    return (
+      <div
+        style={{
+          border: "1px solid #cccccc",
+          padding: 30,
+          width: 700,
+          margin: "auto",
+          marginTop: 64,
+          borderRadius: 25,
+          minHeight: 100,
+        }}
+      >
+        Swap not found or inactive. Please check the swap id and try again.
+      </div>
+    );
+  }
 
   return (
     <div
@@ -231,7 +286,8 @@ export default function TokenSwap({
             </Form.Item>
           </Form>
         )}
-        {readyToSwap && commitSwapId && numTokensOut && (
+        {notFound && <div>Swap already completed or inactive.</div>}
+        {!notFound && readyToSwap && commitSwapId && numTokensOut && (
           <Form name="join_room" onFinish={commitToSwap}>
             <div
               style={{
