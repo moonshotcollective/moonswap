@@ -29,6 +29,8 @@ export default function TokenSwap({
   const [numTokensOut, setNumTokensOut] = useState();
   const [commitSwapId, setCommitSwapId] = useState();
   const [activeSwaps, setActiveSwaps] = useState();
+  const [tokenInAddress, setTokenInAddress] = useState();
+  const [tokenOutAddress, setTokenOutAddress] = useState();
 
   const [tokenInContract, setTokenInContract] = useState();
   const [tokenOutContract, setTokenOutContract] = useState();
@@ -43,11 +45,12 @@ export default function TokenSwap({
     if (readContracts?.MoonSwap) {
       swaps = await readContracts.MoonSwap.getActiveSwaps();
       const latestSwap = swaps[swaps.length - 1];
-      setCommitSwapId(utils.keccak256(latestSwap));
+      console.log("latestSwap: ", latestSwap.toNumber());
+      setCommitSwapId(latestSwap.toNumber());
     }
   };
 
-  const approveTokenAllowance = async ({ maxApproval, token, tokenInContract, tokenOutContract }) => {
+  const approveTokenAllowance = async ({ maxApproval, tokenInContract }) => {
     // const decimals = await getTokenDetails({ token });
     // FIX: Harcoded decimals value
     const newAllowance = ethers.utils.parseUnits(maxApproval, await tokenInContract.decimals());
@@ -56,6 +59,8 @@ export default function TokenSwap({
   };
 
   const createNewSwap = async ({ tokenIn, swapValueIn, tokenOut, swapValueOut }) => {
+    setTokenInAddress(tokenIn);
+    setTokenOutAddress(tokenOut);
     if (!isWalletConnected) {
       return notification.error({
         message: "Access request failed",
@@ -79,9 +84,7 @@ export default function TokenSwap({
     // Approve the token allowance
     await approveTokenAllowance({
       maxApproval: swapValueIn,
-      token: tokenIn,
       tokenInContract: inContract,
-      tokenOutContract: outContract,
     });
 
     const result = tx(
@@ -108,6 +111,11 @@ export default function TokenSwap({
   const commitToSwap = async ({ currentSwapId, tokenOut }) => {
     currentSwapId = commitSwapId;
     tokenOut = numTokensOut;
+
+    const signer = userSigner;
+    const outContract = new ethers.Contract(tokenOutAddress, ERC20ABI, signer);
+
+    await approveTokenAllowance({ maxApproval: tokenOut, tokenInContract: outContract });
 
     const result = tx(writeContracts.MoonSwap.commitToSwap(currentSwapId, tokenOut), update => {
       console.log("📡 Swap Complete:", update);
@@ -246,7 +254,7 @@ export default function TokenSwap({
               <Row>
                 <Col span={16}>
                   <Form.Item label="Swap Id" name="swapId">
-                    <p>{commitSwapId}</p>
+                    {/* <p>{commitSwapId}</p> */}
                   </Form.Item>
                   <Form.Item label="Token Out" name="tokenOut">
                     <p>{numTokensOut} </p>
