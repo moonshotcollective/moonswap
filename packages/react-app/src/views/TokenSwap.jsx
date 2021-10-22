@@ -20,11 +20,15 @@ export default function TokenSwap({
   writeContracts,
   isWalletConnected,
   userSigner,
+  chainId,
 }) {
   const [readyToSwap, setReadyToSwap] = useState();
   const [addressIn, setAddressIn] = useState();
   const [addressOut, setAddressOut] = useState(address);
   const [token, setTokenOut] = useState();
+  const [numTokensOut, setNumTokensOut] = useState();
+  const [commitSwapId, setCommitSwapId] = useState();
+  const [activeSwaps, setActiveSwaps] = useState();
 
   const [tokenInContract, setTokenInContract] = useState();
   const [tokenOutContract, setTokenOutContract] = useState();
@@ -32,6 +36,15 @@ export default function TokenSwap({
   const getTokenDetails = async ({ token }) => {
     const decimals = await readContracts[token].decimals;
     return { decimals };
+  };
+
+  const getLatestSwapId = async () => {
+    let swaps = null;
+    if (readContracts?.MoonSwap) {
+      swaps = await readContracts.MoonSwap.getActiveSwaps();
+      const latestSwap = swaps[swaps.length - 1];
+      setCommitSwapId(utils.keccak256(latestSwap));
+    }
   };
 
   const approveTokenAllowance = async ({ maxApproval, token, tokenInContract, tokenOutContract }) => {
@@ -73,11 +86,12 @@ export default function TokenSwap({
 
     const result = tx(
       writeContracts.MoonSwap.createNewSwap(tokenIn, tokenOut, swapValueIn, swapValueOut, addressOut),
-      update => {
-        console.log("📡 New Swap Created:", update);
+      (update, error) => {
+        console.log("result check ", update, error);
         if (update && (update.status === "confirmed" || update.status === 1)) {
+          console.log("📡 New Swap Created:", update);
           setReadyToSwap(true);
-          setTokenOut(tokenOut);
+          setNumTokensOut(swapValueOut);
           notification.success({
             message: "Ready to Commit To Swap",
             description: "successful",
@@ -85,17 +99,18 @@ export default function TokenSwap({
           });
         }
       },
-    );
+    ).then(result => {
+      console.log("result finished ", result);
+      getLatestSwapId();
+    });
   };
 
-  const commitToSwap = async () => {
-    let swapId = null;
-    if (readContracts?.MoonSwap) {
-      swapId = await readContracts.MoonSwap.swapId();
-      tokenOut = await readContracts.MoonSwap.tokenOut();
-    }
-    const result = tx(writeContracts.MoonSwap.commitToSwap({ swapId, tokenOut }), update => {
-      console.log("📡 Swap Committed:", update);
+  const commitToSwap = async ({ currentSwapId, tokenOut }) => {
+    currentSwapId = commitSwapId;
+    tokenOut = numTokensOut;
+
+    const result = tx(writeContracts.MoonSwap.commitToSwap(currentSwapId, tokenOut), update => {
+      console.log("📡 Swap Complete:", update);
       if (update && (update.status === "confirmed" || update.status === 1)) {
         setReadyToSwap(false);
         console.log(" 🍾 Swap finished!");
@@ -113,7 +128,7 @@ export default function TokenSwap({
       style={{
         border: "1px solid #cccccc",
         padding: 30,
-        width: 600,
+        width: 700,
         margin: "auto",
         marginTop: 64,
         borderRadius: 25,
@@ -121,16 +136,20 @@ export default function TokenSwap({
       }}
     >
       <div>
-        <h2 style={{ float: "left", marginLeft: 10 }}>SWAP</h2>
+        {!readyToSwap && <h2 style={{ float: "left", marginLeft: 10 }}>START SWAP</h2>}
+        {readyToSwap && commitSwapId && numTokensOut && (
+          <h2 style={{ float: "left", marginLeft: 10 }}>COMMIT TO SWAP</h2>
+        )}
         <a style={{ float: "right" }}>
           <Button
             onClick={() => {
               /* look how we call setPurpose AND send some value along */
-              tx(
-                writeContracts.YourContract.setPurpose("💵 Paying for this one!", {
-                  value: utils.parseEther("0.001"),
-                }),
-              );
+              // tx(
+              //   writeContracts.YourContract.setPurpose("💵 Paying for this one!", {
+              //     value: utils.parseEther("0.001"),
+              //   }),
+              // );
+              console.log("Three dots clicked");
               /* this will fail until you make the setPurpose function payable */
             }}
             type="primary"
@@ -141,78 +160,107 @@ export default function TokenSwap({
       </div>
 
       <div style={{ margin: 8 }}>
-        <Form name="join_room" onFinish={createNewSwap}>
-          <div
-            style={{
-              border: "1px solid #cccccc",
-              padding: 20,
-              width: 500,
-              margin: "auto",
-              marginTop: 64,
-              borderRadius: 25,
-            }}
-          >
-            <Row>
-              <Col span={6}>
-                <h1 style={{ float: "left", fontSize: 40 }}>IN</h1>
-              </Col>
-              <Col span={16}>
-                <AddressInput
-                  autoFocus
-                  ensProvider={mainnetProvider}
-                  placeholder="Address"
-                  address={addressIn}
-                  onChange={setAddressIn}
-                />
-                <Form.Item name="tokenIn">
-                  <Input style={{ marginRight: 20, marginTop: 20 }} placeholder="Token Hash" />
-                </Form.Item>
-                <Form.Item name="swapValueIn">
-                  <Input style={{ marginRight: 20, marginTop: 20 }} placeholder="Swap Value" />
-                </Form.Item>
-              </Col>
-            </Row>
-          </div>
-          <ArrowDownOutlined style={{ margin: 20 }} />
-          <div
-            style={{
-              border: "1px solid #cccccc",
-              padding: 20,
-              width: 500,
-              margin: "auto",
-              borderRadius: 25,
-            }}
-          >
-            <Row>
-              <Col span={6}>
-                <h1 style={{ float: "left", fontSize: 40 }}>OUT</h1>
-              </Col>
-              <Col span={16}>
-                <AddressInput
-                  autoFocus
-                  ensProvider={mainnetProvider}
-                  placeholder="Address"
-                  address={addressOut}
-                  onChange={setAddressOut}
-                />
-                <Form.Item name="tokenOut">
-                  <Input style={{ marginRight: 20, marginTop: 20 }} placeholder="Token Hash" />
-                </Form.Item>
-                <Form.Item name="swapValueOut">
-                  <Input style={{ marginRight: 20, marginTop: 20 }} placeholder="Swap Value" />
-                </Form.Item>
-              </Col>
-            </Row>
-          </div>
-          <Button style={{ margin: 30 }} type="primary" disabled={!readyToSwap} onClick={commitToSwap}>
-            Commit To Swap
-          </Button>
-          <Form.Item>
-            <Button htmlType="submit" type="primary" style={{ marginRight: 10 }}>
-              Create New Swap
-            </Button>
-          </Form.Item>
-        </Form>
+        {!readyToSwap && (
+          <Form name="join_room" onFinish={createNewSwap}>
+            <div
+              style={{
+                border: "1px solid #cccccc",
+                padding: 20,
+                width: 500,
+                margin: "auto",
+                marginTop: 64,
+                borderRadius: 25,
+              }}
+            >
+              <Row>
+                <Col span={6}>
+                  <h1 style={{ float: "left", fontSize: 40 }}>IN</h1>
+                </Col>
+                <Col span={16}>
+                  <AddressInput
+                    autoFocus
+                    ensProvider={mainnetProvider}
+                    placeholder="Address"
+                    address={addressIn}
+                    onChange={setAddressIn}
+                  />
+                  <Form.Item name="tokenIn">
+                    <Input style={{ marginRight: 20, marginTop: 20 }} placeholder="Token Hash" />
+                  </Form.Item>
+                  <Form.Item name="swapValueIn">
+                    <Input style={{ marginRight: 20, marginTop: 20 }} placeholder="Token Amount" />
+                  </Form.Item>
+                </Col>
+              </Row>
+            </div>
+            <ArrowDownOutlined style={{ margin: 20 }} />
+            <div
+              style={{
+                border: "1px solid #cccccc",
+                padding: 20,
+                width: 500,
+                margin: "auto",
+                borderRadius: 25,
+              }}
+            >
+              <Row>
+                <Col span={6}>
+                  <h1 style={{ float: "left", fontSize: 40 }}>OUT</h1>
+                </Col>
+                <Col span={16}>
+                  <AddressInput
+                    autoFocus
+                    ensProvider={mainnetProvider}
+                    placeholder="Address"
+                    address={addressOut}
+                    onChange={setAddressOut}
+                  />
+                  <Form.Item name="tokenOut">
+                    <Input style={{ marginRight: 20, marginTop: 20 }} placeholder="Token Hash" />
+                  </Form.Item>
+                  <Form.Item name="swapValueOut">
+                    <Input style={{ marginRight: 20, marginTop: 20 }} placeholder="Token Amount" />
+                  </Form.Item>
+                </Col>
+              </Row>
+            </div>
+            <Form.Item>
+              <Button htmlType="submit" type="primary" style={{ marginRight: 10, marginTop: 10 }}>
+                Create New Swap
+              </Button>
+            </Form.Item>
+          </Form>
+        )}
+        {readyToSwap && commitSwapId && numTokensOut && (
+          <Form name="join_room" onFinish={commitToSwap}>
+            <div
+              style={{
+                border: "1px solid #cccccc",
+                padding: 20,
+                width: 600,
+                margin: "auto",
+                marginTop: 64,
+                borderRadius: 25,
+              }}
+            >
+              <Row>
+                <Col span={16}>
+                  <Form.Item label="Swap Id" name="swapId">
+                    <p>{commitSwapId}</p>
+                  </Form.Item>
+                  <Form.Item label="Token Out" name="tokenOut">
+                    <p>{numTokensOut} </p>
+                  </Form.Item>
+                </Col>
+              </Row>
+            </div>
+            <Form.Item>
+              <Button htmlType="submit" type="primary" style={{ marginRight: 10, marginTop: 10 }}>
+                Commit To Swap
+              </Button>
+            </Form.Item>
+          </Form>
+        )}
       </div>
     </div>
   );

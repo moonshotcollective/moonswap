@@ -527,6 +527,7 @@ function App(props) {
               setPurposeEvents={setPurposeEvents}
               isWalletConnected={isWalletConnected}
               userSigner={userSigner}
+              chainId={selectedChainId}
             />
           </Route>
           <Route exact path="/contracts">

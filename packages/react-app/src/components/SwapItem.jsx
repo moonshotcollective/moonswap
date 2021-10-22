@@ -44,7 +44,7 @@ export default function SwapItem({ hash, localProvider, chainId, ...props }) {
               href={`${explorer}tx/${hash}`}
               rel="noopener noreferrer"
             >
-              {hash.substr(0, 10)}
+              {hash}
             </a>
           </Typography.Text>
         </div>
