@@ -165,6 +165,7 @@ export default function TokenSwap({
       if (update && (update.status === "confirmed" || update.status === 1)) {
         setReadyToSwap(false);
         setSwapComplete(true);
+        setSwapStep(2);
         console.log(" 🍾 Swap finished!");
         notification.success({
           message: "Swap Complete",
