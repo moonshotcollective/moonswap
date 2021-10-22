@@ -4,7 +4,7 @@ import { Button, Divider, Input, List, Row, Col, Tabs, Card, Form, Checkbox, not
 import React, { useState, useEffect } from "react";
 import { Address, Balance, ClaimFees, AddressInput } from "../components";
 import externalContracts from "../contracts/external_contracts";
-import { useParams } from "react-router-dom";
+import { useParams, useHistory } from "react-router-dom";
 
 const ERC20ABI = externalContracts[1].contracts.UNI.abi;
 
@@ -24,6 +24,7 @@ export default function TokenSwap({
   chainId,
 }) {
   const { id } = useParams();
+  const history = useHistory();
   const [readyToSwap, setReadyToSwap] = useState();
   const [addressIn, setAddressIn] = useState();
   const [addressOut, setAddressOut] = useState(address);
@@ -36,6 +37,8 @@ export default function TokenSwap({
 
   const [tokenInContract, setTokenInContract] = useState();
   const [tokenOutContract, setTokenOutContract] = useState();
+
+  const [notFound, setNotFound] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -50,6 +53,10 @@ export default function TokenSwap({
   const getSwapData = async id => {
     if (readContracts && readContracts.MoonSwap) {
       const swapData = await readContracts.MoonSwap.swaps(id);
+      const status = swapData.status;
+      if (!status) {
+        setNotFound(true);
+      }
       setNumTokensOut(swapData.tokensOut.toNumber());
       setTokenOutAddress(swapData.outToken.toString());
       console.log("swapData: ", swapData);
@@ -67,6 +74,7 @@ export default function TokenSwap({
       swaps = await readContracts.MoonSwap.getActiveSwaps();
       const latestSwap = swaps[swaps.length - 1];
       console.log("latestSwap: ", latestSwap.toNumber());
+      history.push(`/swap/${latestSwap.toNumber()}`);
       setCommitSwapId(latestSwap.toNumber());
     }
   };
@@ -151,6 +159,24 @@ export default function TokenSwap({
       }
     });
   };
+
+  if (notFound) {
+    return (
+      <div
+        style={{
+          border: "1px solid #cccccc",
+          padding: 30,
+          width: 700,
+          margin: "auto",
+          marginTop: 64,
+          borderRadius: 25,
+          minHeight: 100,
+        }}
+      >
+        Swap not found or inactive. Please check the swap id and try again.
+      </div>
+    );
+  }
 
   return (
     <div
@@ -260,7 +286,8 @@ export default function TokenSwap({
             </Form.Item>
           </Form>
         )}
-        {readyToSwap && commitSwapId && numTokensOut && (
+        {notFound && <div>Swap already completed or inactive.</div>}
+        {!notFound && readyToSwap && commitSwapId && numTokensOut && (
           <Form name="join_room" onFinish={commitToSwap}>
             <div
               style={{
