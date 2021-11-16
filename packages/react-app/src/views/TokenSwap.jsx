@@ -5,6 +5,7 @@ import React, { useState, useEffect } from "react";
 import { Address, Balance, ClaimFees, AddressInput } from "../components";
 import externalContracts from "../contracts/external_contracts";
 import { useParams, useHistory, Link } from "react-router-dom";
+import { getTokenData } from "../helpers/tokenData";
 const { Step } = Steps;
 
 const ERC20ABI = externalContracts[1].contracts.UNI.abi;
@@ -41,6 +42,11 @@ export default function TokenSwap({
   const [tokenInContract, setTokenInContract] = useState();
   const [tokenOutContract, setTokenOutContract] = useState();
 
+  const [swapData, setSwapData] = useState();
+
+  const [tokenInMetadata, setTokenInMetadata] = useState();
+  const [tokenOutMetadata, setTokenOutMetadata] = useState();
+
   const [notFound, setNotFound] = useState(false);
 
   useEffect(() => {
@@ -52,6 +58,19 @@ export default function TokenSwap({
       getSwapData(id);
     }
   }, [id, readContracts]);
+
+  useEffect(() => {
+    async function exec() {
+      if (swapData) {
+        const tokenInData = await getTokenData(swapData.inToken, userSigner);
+        const tokenOutData = await getTokenData(swapData.outToken, userSigner);
+        setTokenInMetadata(tokenInData);
+        setTokenOutMetadata(tokenOutData);
+      }
+    }
+
+    exec();
+  }, [swapData]);
 
   useEffect(() => {
     if (window.location.href.endsWith("/swap")) {
@@ -72,6 +91,7 @@ export default function TokenSwap({
       }
       setNumTokensOut(swapData.tokensOut.toNumber());
       setTokenOutAddress(swapData.outToken.toString());
+      setSwapData(swapData);
       console.log("swapData: ", swapData);
     }
   };
@@ -311,7 +331,7 @@ export default function TokenSwap({
           </Form>
         )}
         {notFound && <div>Swap already completed or inactive.</div>}
-        {!notFound && !swapComplete && readyToSwap && commitSwapId && numTokensOut && (
+        {!notFound && !swapComplete && readyToSwap && commitSwapId && numTokensOut && swapData && (
           <Form name="join_room" onFinish={commitToSwap}>
             <div
               style={{
@@ -328,8 +348,21 @@ export default function TokenSwap({
                   <Form.Item label="Swap Id" name="swapId">
                     <p>{commitSwapId}</p>
                   </Form.Item>
+                  <Form.Item label="Token In" name="tokenIn">
+                    <p>
+                      {swapData.tokensIn.toNumber()} {tokenInMetadata && tokenInMetadata.symbol}
+                    </p>
+                  </Form.Item>
                   <Form.Item label="Token Out" name="tokenOut">
-                    <p>{numTokensOut} </p>
+                    <p>
+                      {swapData.tokensOut.toNumber()} {tokenOutMetadata && tokenOutMetadata.symbol}
+                    </p>
+                  </Form.Item>
+                  <Form.Item label="Swapping from" name="inParty">
+                    <Address address={swapData.inTokenParty} ensProvider={mainnetProvider} fontSize={18} />
+                  </Form.Item>
+                  <Form.Item label="Swapping to" name="inParty">
+                    <Address address={swapData.outTokenParty} ensProvider={mainnetProvider} fontSize={18} />
                   </Form.Item>
                 </Col>
               </Row>
