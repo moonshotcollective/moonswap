@@ -5,7 +5,7 @@ import React, { useState, useEffect } from "react";
 import { Address, Balance, ClaimFees, AddressInput } from "../components";
 import externalContracts from "../contracts/external_contracts";
 import { useParams, useHistory, Link } from "react-router-dom";
-import { getTokenData } from "../helpers/tokenData";
+import { checkAllowance, getTokenData } from "../helpers/utils";
 const { Step } = Steps;
 
 const ERC20ABI = externalContracts[1].contracts.UNI.abi;
@@ -30,17 +30,12 @@ export default function TokenSwap({
   const [readyToSwap, setReadyToSwap] = useState();
   const [addressIn, setAddressIn] = useState();
   const [addressOut, setAddressOut] = useState(address);
-  const [token, setTokenOut] = useState();
   const [numTokensOut, setNumTokensOut] = useState();
   const [commitSwapId, setCommitSwapId] = useState();
-  const [activeSwaps, setActiveSwaps] = useState();
   const [tokenInAddress, setTokenInAddress] = useState();
   const [tokenOutAddress, setTokenOutAddress] = useState();
   const [swapStep, setSwapStep] = useState();
   const [swapComplete, setSwapComplete] = useState();
-
-  const [tokenInContract, setTokenInContract] = useState();
-  const [tokenOutContract, setTokenOutContract] = useState();
 
   const [swapData, setSwapData] = useState();
 
@@ -51,7 +46,6 @@ export default function TokenSwap({
 
   useEffect(() => {
     if (id) {
-      console.log("id: ", id);
       setReadyToSwap(true);
       setCommitSwapId(id);
 
@@ -96,11 +90,6 @@ export default function TokenSwap({
     }
   };
 
-  const getTokenDetails = async ({ token }) => {
-    const decimals = await readContracts[token].decimals;
-    return { decimals };
-  };
-
   const getLatestSwapId = async () => {
     let swaps = null;
     if (readContracts?.MoonSwap) {
@@ -133,21 +122,17 @@ export default function TokenSwap({
 
     const signer = userSigner;
 
-    console.log("signer", signer);
-
     const inContract = new ethers.Contract(tokenIn, ERC20ABI, signer);
-    const outContract = new ethers.Contract(tokenOut, ERC20ABI, signer);
 
-    console.log("inContract", inContract);
+    const currentAllowance = await checkAllowance(tokenInAddress, signer, readContracts.MoonSwap.address);
 
-    setTokenInContract(inContract);
-    setTokenOutContract(outContract);
-
-    // Approve the token allowance
-    await approveTokenAllowance({
-      maxApproval: swapValueIn,
-      tokenInContract: inContract,
-    });
+    if (currentAllowance < ethers.utils.formatEther(swapValueIn)) {
+      // Approve the token allowance
+      await approveTokenAllowance({
+        maxApproval: swapValueIn,
+        tokenInContract: inContract,
+      });
+    }
 
     const result = tx(
       writeContracts.MoonSwap.createNewSwap(tokenIn, tokenOut, swapValueIn, swapValueOut, addressOut),
@@ -178,7 +163,11 @@ export default function TokenSwap({
     const signer = userSigner;
     const outContract = new ethers.Contract(tokenOutAddress, ERC20ABI, signer);
 
-    await approveTokenAllowance({ maxApproval: tokenOut.toString(), tokenInContract: outContract });
+    const currentAllowance = await checkAllowance(tokenOutAddress, signer, readContracts.MoonSwap.address);
+
+    if (currentAllowance < ethers.utils.formatEther(tokenOut)) {
+      await approveTokenAllowance({ maxApproval: tokenOut.toString(), tokenInContract: outContract });
+    }
 
     const result = tx(writeContracts.MoonSwap.commitToSwap(currentSwapId, tokenOut), update => {
       console.log("📡 Swap Complete:", update);
@@ -238,7 +227,6 @@ export default function TokenSwap({
             <Button
               onClick={() => {
                 setCommitSwapId(null);
-                setTokenOut(null);
                 setReadyToSwap(false);
                 setSwapStep(0);
               }}
@@ -279,15 +267,20 @@ export default function TokenSwap({
                   <AddressInput
                     autoFocus
                     ensProvider={mainnetProvider}
-                    placeholder="Address"
+                    placeholder="In party address"
                     address={addressIn}
                     onChange={setAddressIn}
                   />
                   <Form.Item name="tokenIn">
-                    <Input style={{ marginRight: 20, marginTop: 20 }} placeholder="Token Hash" />
+                    <Input
+                      value={tokenInAddress}
+                      onChange={e => setTokenInAddress(e.target.value)}
+                      style={{ marginRight: 20, marginTop: 20 }}
+                      placeholder="In token contract address"
+                    />
                   </Form.Item>
                   <Form.Item name="swapValueIn">
-                    <Input style={{ marginRight: 20, marginTop: 20 }} placeholder="Token Amount" />
+                    <Input style={{ marginRight: 20, marginTop: 20 }} placeholder="Token Amount in wei" />
                   </Form.Item>
                 </Col>
               </Row>
@@ -310,15 +303,20 @@ export default function TokenSwap({
                   <AddressInput
                     autoFocus
                     ensProvider={mainnetProvider}
-                    placeholder="Address"
+                    placeholder="Out party address"
                     address={addressOut}
                     onChange={setAddressOut}
                   />
                   <Form.Item name="tokenOut">
-                    <Input style={{ marginRight: 20, marginTop: 20 }} placeholder="Token Hash" />
+                    <Input
+                      value={tokenOutAddress}
+                      onChange={e => setTokenOutAddress(e.target.value)}
+                      style={{ marginRight: 20, marginTop: 20 }}
+                      placeholder="Out token contract address"
+                    />
                   </Form.Item>
                   <Form.Item name="swapValueOut">
-                    <Input style={{ marginRight: 20, marginTop: 20 }} placeholder="Token Amount" />
+                    <Input style={{ marginRight: 20, marginTop: 20 }} placeholder="Token Amount in wei" />
                   </Form.Item>
                 </Col>
               </Row>
