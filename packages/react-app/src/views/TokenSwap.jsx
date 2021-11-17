@@ -76,6 +76,16 @@ export default function TokenSwap({
     }
   }, []);
 
+  useEffect(() => {
+    async function exec() {
+      const tokenInData = await getTokenData(tokenInAddress, userSigner);
+      const tokenOutData = await getTokenData(tokenOutAddress, userSigner);
+      setTokenInMetadata(tokenInData);
+      setTokenOutMetadata(tokenOutData);
+    }
+    exec();
+  }, [tokenInAddress, tokenOutAddress]);
+
   const getSwapData = async id => {
     if (readContracts && readContracts.MoonSwap) {
       const swapData = await readContracts.MoonSwap.swaps(id);
@@ -275,12 +285,14 @@ export default function TokenSwap({
                     <Input
                       value={tokenInAddress}
                       onChange={e => setTokenInAddress(e.target.value)}
-                      style={{ marginRight: 20, marginTop: 20 }}
+                      style={{ marginRight: 0, marginTop: 20 }}
                       placeholder="In token contract address"
                     />
+                    <span>{tokenInMetadata.name}</span>
                   </Form.Item>
                   <Form.Item name="swapValueIn">
                     <Input style={{ marginRight: 20, marginTop: 20 }} placeholder="Token Amount in wei" />
+                    <span>{tokenInMetadata.symbol}</span>
                   </Form.Item>
                 </Col>
               </Row>
@@ -314,9 +326,11 @@ export default function TokenSwap({
                       style={{ marginRight: 20, marginTop: 20 }}
                       placeholder="Out token contract address"
                     />
+                    <span>{tokenOutMetadata.name}</span>
                   </Form.Item>
                   <Form.Item name="swapValueOut">
                     <Input style={{ marginRight: 20, marginTop: 20 }} placeholder="Token Amount in wei" />
+                    <span>{tokenOutMetadata.symbol}</span>
                   </Form.Item>
                 </Col>
               </Row>
