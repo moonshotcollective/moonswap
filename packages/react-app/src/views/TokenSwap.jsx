@@ -34,6 +34,8 @@ export default function TokenSwap({
   const [commitSwapId, setCommitSwapId] = useState();
   const [tokenInAddress, setTokenInAddress] = useState();
   const [tokenOutAddress, setTokenOutAddress] = useState();
+  const [swapValueIn, setSwapValueIn] = useState();
+  const [swapValueOut, setSwapValueOut] = useState();
   const [swapStep, setSwapStep] = useState();
   const [swapComplete, setSwapComplete] = useState();
 
@@ -120,9 +122,7 @@ export default function TokenSwap({
     await res.wait(1);
   };
 
-  const createNewSwap = async ({ tokenIn, swapValueIn, tokenOut, swapValueOut }) => {
-    setTokenInAddress(tokenIn);
-    setTokenOutAddress(tokenOut);
+  const createNewSwap = async () => {
     if (!isWalletConnected) {
       return notification.error({
         message: "Access request failed",
@@ -133,7 +133,7 @@ export default function TokenSwap({
 
     const signer = userSigner;
 
-    const inContract = new ethers.Contract(tokenIn, ERC20ABI, signer);
+    const inContract = new ethers.Contract(tokenInAddress, ERC20ABI, signer);
 
     const currentAllowance = await checkAllowance(tokenInAddress, signer, readContracts.MoonSwap.address);
 
@@ -146,7 +146,7 @@ export default function TokenSwap({
     }
 
     const result = tx(
-      writeContracts.MoonSwap.createNewSwap(tokenIn, tokenOut, swapValueIn, swapValueOut, addressOut),
+      writeContracts.MoonSwap.createNewSwap(tokenInAddress, tokenOutAddress, swapValueIn, swapValueOut, addressOut),
       (update, error) => {
         console.log("result check ", update, error);
         if (update && (update.status === "confirmed" || update.status === 1)) {
@@ -292,7 +292,12 @@ export default function TokenSwap({
                     <span>{tokenInMetadata?.name ? tokenInMetadata.name : "Loading..."}</span>
                   </Form.Item>
                   <Form.Item name="swapValueIn">
-                    <Input style={{ marginRight: 20, marginTop: 20 }} placeholder="Token Amount in wei" />
+                    <Input
+                      value={swapValueIn}
+                      onChange={e => setSwapValueIn(e.target.value)}
+                      style={{ marginRight: 20, marginTop: 20 }}
+                      placeholder="Token Amount in wei"
+                    />
                     <span>{tokenInMetadata?.symbol ? tokenInMetadata.symbol : "Loading..."}</span>
                   </Form.Item>
                 </Col>
@@ -330,7 +335,12 @@ export default function TokenSwap({
                     <span>{tokenOutMetadata?.name ? tokenOutMetadata.name : "Loading..."}</span>
                   </Form.Item>
                   <Form.Item name="swapValueOut">
-                    <Input style={{ marginRight: 20, marginTop: 20 }} placeholder="Token Amount in wei" />
+                    <Input
+                      value={swapValueOut}
+                      onChange={e => setSwapValueOut(e.target.value)}
+                      style={{ marginRight: 20, marginTop: 20 }}
+                      placeholder="Token Amount in wei"
+                    />
                     <span>{tokenOutMetadata?.symbol ? tokenOutMetadata.symbol : "Loading..."}</span>
                   </Form.Item>
                 </Col>
@@ -365,7 +375,7 @@ export default function TokenSwap({
                     <p>
                       {tokenInMetadata &&
                         (tokenInMetadata.symbol
-                          ? swapData.tokensIn.toNumber() + " " + tokenInMetadata.symbol
+                          ? swapData.tokensIn.toNumber() + " " + tokenInMetadata.symbol + "(wei)"
                           : "Loading...")}
                     </p>
                   </Form.Item>
@@ -373,7 +383,7 @@ export default function TokenSwap({
                     <p>
                       {tokenOutMetadata &&
                         (tokenOutMetadata.symbol
-                          ? swapData.tokensOut.toNumber() + " " + tokenOutMetadata.symbol
+                          ? swapData.tokensOut.toNumber() + " " + tokenOutMetadata.symbol + "(wei)"
                           : "Loading...")}
                     </p>
                   </Form.Item>
