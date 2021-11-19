@@ -289,7 +289,7 @@ export default function TokenSwap({
                       style={{ marginRight: 0, marginTop: 20 }}
                       placeholder="In token contract address"
                     />
-                    <span>{tokenInMetadata?.name ? tokenInMetadata.name : "Loading..."}</span>
+                    {tokenInMetadata?.name && <span> {tokenInMetadata.name} </span>}
                   </Form.Item>
                   <Form.Item name="swapValueIn">
                     <Input
@@ -298,7 +298,7 @@ export default function TokenSwap({
                       style={{ marginRight: 20, marginTop: 20 }}
                       placeholder="Token Amount in wei"
                     />
-                    <span>{tokenInMetadata?.symbol ? tokenInMetadata.symbol : "Loading..."}</span>
+                    {tokenInMetadata?.symbol && <span> {tokenInMetadata.symbol} </span>}
                   </Form.Item>
                 </Col>
               </Row>
@@ -332,7 +332,7 @@ export default function TokenSwap({
                       style={{ marginRight: 20, marginTop: 20 }}
                       placeholder="Out token contract address"
                     />
-                    <span>{tokenOutMetadata?.name ? tokenOutMetadata.name : "Loading..."}</span>
+                    {tokenOutMetadata?.name && <span>{tokenOutMetadata.name}</span>}
                   </Form.Item>
                   <Form.Item name="swapValueOut">
                     <Input
@@ -341,7 +341,7 @@ export default function TokenSwap({
                       style={{ marginRight: 20, marginTop: 20 }}
                       placeholder="Token Amount in wei"
                     />
-                    <span>{tokenOutMetadata?.symbol ? tokenOutMetadata.symbol : "Loading..."}</span>
+                    {tokenOutMetadata?.symbol && <span> {tokenOutMetadata.symbol} </span>}
                   </Form.Item>
                 </Col>
               </Row>
