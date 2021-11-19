@@ -79,6 +79,7 @@ export default function TokenSwap({
   useEffect(() => {
     async function exec() {
       const tokenInData = await getTokenData(tokenInAddress, userSigner);
+      console.log("tokenInData", tokenInData);
       const tokenOutData = await getTokenData(tokenOutAddress, userSigner);
       setTokenInMetadata(tokenInData);
       setTokenOutMetadata(tokenOutData);
@@ -288,11 +289,11 @@ export default function TokenSwap({
                       style={{ marginRight: 0, marginTop: 20 }}
                       placeholder="In token contract address"
                     />
-                    <span>{tokenInMetadata.name}</span>
+                    <span>{tokenInMetadata?.name ? tokenInMetadata.name : "Loading..."}</span>
                   </Form.Item>
                   <Form.Item name="swapValueIn">
                     <Input style={{ marginRight: 20, marginTop: 20 }} placeholder="Token Amount in wei" />
-                    <span>{tokenInMetadata.symbol}</span>
+                    <span>{tokenInMetadata?.symbol ? tokenInMetadata.symbol : "Loading..."}</span>
                   </Form.Item>
                 </Col>
               </Row>
@@ -326,11 +327,11 @@ export default function TokenSwap({
                       style={{ marginRight: 20, marginTop: 20 }}
                       placeholder="Out token contract address"
                     />
-                    <span>{tokenOutMetadata.name}</span>
+                    <span>{tokenOutMetadata?.name ? tokenOutMetadata.name : "Loading..."}</span>
                   </Form.Item>
                   <Form.Item name="swapValueOut">
                     <Input style={{ marginRight: 20, marginTop: 20 }} placeholder="Token Amount in wei" />
-                    <span>{tokenOutMetadata.symbol}</span>
+                    <span>{tokenOutMetadata?.symbol ? tokenOutMetadata.symbol : "Loading..."}</span>
                   </Form.Item>
                 </Col>
               </Row>
@@ -362,12 +363,18 @@ export default function TokenSwap({
                   </Form.Item>
                   <Form.Item label="Token In" name="tokenIn">
                     <p>
-                      {swapData.tokensIn.toNumber()} {tokenInMetadata && tokenInMetadata.symbol}
+                      {tokenInMetadata &&
+                        (tokenInMetadata.symbol
+                          ? swapData.tokensIn.toNumber() + " " + tokenInMetadata.symbol
+                          : "Loading...")}
                     </p>
                   </Form.Item>
                   <Form.Item label="Token Out" name="tokenOut">
                     <p>
-                      {swapData.tokensOut.toNumber()} {tokenOutMetadata && tokenOutMetadata.symbol}
+                      {tokenOutMetadata &&
+                        (tokenOutMetadata.symbol
+                          ? swapData.tokensOut.toNumber() + " " + tokenOutMetadata.symbol
+                          : "Loading...")}
                     </p>
                   </Form.Item>
                   <Form.Item label="Swapping from" name="inParty">
