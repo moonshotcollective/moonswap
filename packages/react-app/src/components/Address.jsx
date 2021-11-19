@@ -79,7 +79,7 @@ export default function Address(props) {
   }
 
   let text;
-  if (props.onChange) {
+  if (props.onChange && props.enableEdit) {
     text = (
       <Text editable={{ onChange: props.onChange }} copyable={{ text: address }}>
         <a

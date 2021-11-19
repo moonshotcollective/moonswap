@@ -259,7 +259,7 @@ export default function TokenSwap({
 
       <div style={{ margin: 8 }}>
         {!readyToSwap && !swapComplete && (
-          <Form name="join_room" onFinish={createNewSwap}>
+          <Form name="create_new_swap" onFinish={createNewSwap}>
             <div
               style={{
                 border: "1px solid #cccccc",
@@ -355,7 +355,7 @@ export default function TokenSwap({
         )}
         {notFound && <div>Swap already completed or inactive.</div>}
         {!notFound && !swapComplete && readyToSwap && commitSwapId && numTokensOut && swapData && (
-          <Form name="join_room" onFinish={commitToSwap}>
+          <Form name="commit_swap_view" onFinish={commitToSwap}>
             <div
               style={{
                 border: "1px solid #cccccc",
