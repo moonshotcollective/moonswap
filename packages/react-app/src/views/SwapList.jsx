@@ -68,6 +68,7 @@ export default function SwapList({
           <List
             bordered
             dataSource={activeSwaps}
+            pagination={{ pageSize: 10 }}
             renderItem={(item, index) => (
               <List.Item>
                 <div
