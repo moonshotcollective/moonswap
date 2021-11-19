@@ -78,9 +78,9 @@ export default function SwapList({
                   }}
                 >
                   <SwapItem
-                    index={swapIds[index]}
+                    index={swapIds[activeSwaps.indexOf(item)]}
                     onClick={() => {
-                      history.push(`/swap/${swapIds[index]}`);
+                      history.push(`/swap/${swapIds[activeSwaps.indexOf(item)]}`);
                     }}
                     hash={item}
                     localProvider={localProvider}
