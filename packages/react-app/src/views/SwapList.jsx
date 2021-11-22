@@ -30,12 +30,20 @@ export default function SwapList({
     let tempIds = [];
     if (readContracts?.MoonSwap) {
       swaps = await readContracts.MoonSwap.getActiveSwaps();
-
+      console.log("swaps", swaps);
       swaps.forEach(swap => {
-        temp.push(utils.keccak256(swap));
         tempIds.push(swap.toNumber());
       });
-      console.log("viewswap ", swaps, temp);
+      console.log("viewswap ", swaps);
+      console.log("tempIds ", tempIds);
+      console.log("before sorting tempIds", tempIds);
+
+      tempIds = tempIds.sort((a, b) => b - a);
+      tempIds.map((id, index) => {
+        temp.push(utils.keccak256(swaps.find(swap => swap.toNumber() === id)));
+      });
+      console.log("temp ", temp);
+
       setActiveSwaps(temp);
       setSwapIds(tempIds);
     }
@@ -60,6 +68,7 @@ export default function SwapList({
           <List
             bordered
             dataSource={activeSwaps}
+            pagination={{ pageSize: 10 }}
             renderItem={(item, index) => (
               <List.Item>
                 <div
@@ -69,9 +78,9 @@ export default function SwapList({
                   }}
                 >
                   <SwapItem
-                    index={swapIds[index]}
+                    index={swapIds[activeSwaps.indexOf(item)]}
                     onClick={() => {
-                      history.push(`/swap/${swapIds[index]}`);
+                      history.push(`/swap/${swapIds[activeSwaps.indexOf(item)]}`);
                     }}
                     hash={item}
                     localProvider={localProvider}

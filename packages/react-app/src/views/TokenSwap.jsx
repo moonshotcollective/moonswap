@@ -5,6 +5,7 @@ import React, { useState, useEffect } from "react";
 import { Address, Balance, ClaimFees, AddressInput } from "../components";
 import externalContracts from "../contracts/external_contracts";
 import { useParams, useHistory, Link } from "react-router-dom";
+import { checkAllowance, getTokenData } from "../helpers/utils";
 const { Step } = Steps;
 
 const ERC20ABI = externalContracts[1].contracts.UNI.abi;
@@ -29,29 +30,43 @@ export default function TokenSwap({
   const [readyToSwap, setReadyToSwap] = useState();
   const [addressIn, setAddressIn] = useState();
   const [addressOut, setAddressOut] = useState(address);
-  const [token, setTokenOut] = useState();
   const [numTokensOut, setNumTokensOut] = useState();
   const [commitSwapId, setCommitSwapId] = useState();
-  const [activeSwaps, setActiveSwaps] = useState();
   const [tokenInAddress, setTokenInAddress] = useState();
   const [tokenOutAddress, setTokenOutAddress] = useState();
+  const [swapValueIn, setSwapValueIn] = useState();
+  const [swapValueOut, setSwapValueOut] = useState();
   const [swapStep, setSwapStep] = useState();
   const [swapComplete, setSwapComplete] = useState();
 
-  const [tokenInContract, setTokenInContract] = useState();
-  const [tokenOutContract, setTokenOutContract] = useState();
+  const [swapData, setSwapData] = useState();
+
+  const [tokenInMetadata, setTokenInMetadata] = useState();
+  const [tokenOutMetadata, setTokenOutMetadata] = useState();
 
   const [notFound, setNotFound] = useState(false);
 
   useEffect(() => {
     if (id) {
-      console.log("id: ", id);
       setReadyToSwap(true);
       setCommitSwapId(id);
 
       getSwapData(id);
     }
   }, [id, readContracts]);
+
+  useEffect(() => {
+    async function exec() {
+      if (swapData) {
+        const tokenInData = await getTokenData(swapData.inToken, userSigner);
+        const tokenOutData = await getTokenData(swapData.outToken, userSigner);
+        setTokenInMetadata(tokenInData);
+        setTokenOutMetadata(tokenOutData);
+      }
+    }
+
+    exec();
+  }, [swapData]);
 
   useEffect(() => {
     if (window.location.href.endsWith("/swap")) {
@@ -63,6 +78,17 @@ export default function TokenSwap({
     }
   }, []);
 
+  useEffect(() => {
+    async function exec() {
+      const tokenInData = await getTokenData(tokenInAddress, userSigner);
+      console.log("tokenInData", tokenInData);
+      const tokenOutData = await getTokenData(tokenOutAddress, userSigner);
+      setTokenInMetadata(tokenInData);
+      setTokenOutMetadata(tokenOutData);
+    }
+    exec();
+  }, [tokenInAddress, tokenOutAddress]);
+
   const getSwapData = async id => {
     if (readContracts && readContracts.MoonSwap) {
       const swapData = await readContracts.MoonSwap.swaps(id);
@@ -72,13 +98,9 @@ export default function TokenSwap({
       }
       setNumTokensOut(swapData.tokensOut.toNumber());
       setTokenOutAddress(swapData.outToken.toString());
+      setSwapData(swapData);
       console.log("swapData: ", swapData);
     }
-  };
-
-  const getTokenDetails = async ({ token }) => {
-    const decimals = await readContracts[token].decimals;
-    return { decimals };
   };
 
   const getLatestSwapId = async () => {
@@ -100,9 +122,7 @@ export default function TokenSwap({
     await res.wait(1);
   };
 
-  const createNewSwap = async ({ tokenIn, swapValueIn, tokenOut, swapValueOut }) => {
-    setTokenInAddress(tokenIn);
-    setTokenOutAddress(tokenOut);
+  const createNewSwap = async () => {
     if (!isWalletConnected) {
       return notification.error({
         message: "Access request failed",
@@ -113,24 +133,20 @@ export default function TokenSwap({
 
     const signer = userSigner;
 
-    console.log("signer", signer);
+    const inContract = new ethers.Contract(tokenInAddress, ERC20ABI, signer);
 
-    const inContract = new ethers.Contract(tokenIn, ERC20ABI, signer);
-    const outContract = new ethers.Contract(tokenOut, ERC20ABI, signer);
+    const currentAllowance = await checkAllowance(tokenInAddress, signer, readContracts.MoonSwap.address);
 
-    console.log("inContract", inContract);
-
-    setTokenInContract(inContract);
-    setTokenOutContract(outContract);
-
-    // Approve the token allowance
-    await approveTokenAllowance({
-      maxApproval: swapValueIn,
-      tokenInContract: inContract,
-    });
+    if (currentAllowance < ethers.utils.formatEther(swapValueIn)) {
+      // Approve the token allowance
+      await approveTokenAllowance({
+        maxApproval: swapValueIn,
+        tokenInContract: inContract,
+      });
+    }
 
     const result = tx(
-      writeContracts.MoonSwap.createNewSwap(tokenIn, tokenOut, swapValueIn, swapValueOut, addressOut),
+      writeContracts.MoonSwap.createNewSwap(tokenInAddress, tokenOutAddress, swapValueIn, swapValueOut, addressOut),
       (update, error) => {
         console.log("result check ", update, error);
         if (update && (update.status === "confirmed" || update.status === 1)) {
@@ -158,7 +174,11 @@ export default function TokenSwap({
     const signer = userSigner;
     const outContract = new ethers.Contract(tokenOutAddress, ERC20ABI, signer);
 
-    await approveTokenAllowance({ maxApproval: tokenOut.toString(), tokenInContract: outContract });
+    const currentAllowance = await checkAllowance(tokenOutAddress, signer, readContracts.MoonSwap.address);
+
+    if (currentAllowance < ethers.utils.formatEther(tokenOut)) {
+      await approveTokenAllowance({ maxApproval: tokenOut.toString(), tokenInContract: outContract });
+    }
 
     const result = tx(writeContracts.MoonSwap.commitToSwap(currentSwapId, tokenOut), update => {
       console.log("📡 Swap Complete:", update);
@@ -218,7 +238,6 @@ export default function TokenSwap({
             <Button
               onClick={() => {
                 setCommitSwapId(null);
-                setTokenOut(null);
                 setReadyToSwap(false);
                 setSwapStep(0);
               }}
@@ -240,7 +259,7 @@ export default function TokenSwap({
 
       <div style={{ margin: 8 }}>
         {!readyToSwap && !swapComplete && (
-          <Form name="join_room" onFinish={createNewSwap}>
+          <Form name="create_new_swap" onFinish={createNewSwap}>
             <div
               style={{
                 border: "1px solid #cccccc",
@@ -259,15 +278,27 @@ export default function TokenSwap({
                   <AddressInput
                     autoFocus
                     ensProvider={mainnetProvider}
-                    placeholder="Address"
+                    placeholder="In party address"
                     address={addressIn}
                     onChange={setAddressIn}
                   />
                   <Form.Item name="tokenIn">
-                    <Input style={{ marginRight: 20, marginTop: 20 }} placeholder="Token Hash" />
+                    <Input
+                      value={tokenInAddress}
+                      onChange={e => setTokenInAddress(e.target.value)}
+                      style={{ marginRight: 0, marginTop: 20 }}
+                      placeholder="In token contract address"
+                    />
+                    {tokenInMetadata?.name && <span> {tokenInMetadata.name} </span>}
                   </Form.Item>
                   <Form.Item name="swapValueIn">
-                    <Input style={{ marginRight: 20, marginTop: 20 }} placeholder="Token Amount" />
+                    <Input
+                      value={swapValueIn}
+                      onChange={e => setSwapValueIn(e.target.value)}
+                      style={{ marginRight: 20, marginTop: 20 }}
+                      placeholder="Token Amount in wei"
+                    />
+                    {tokenInMetadata?.symbol && <span> {tokenInMetadata.symbol} </span>}
                   </Form.Item>
                 </Col>
               </Row>
@@ -290,15 +321,27 @@ export default function TokenSwap({
                   <AddressInput
                     autoFocus
                     ensProvider={mainnetProvider}
-                    placeholder="Address"
+                    placeholder="Out party address"
                     address={addressOut}
                     onChange={setAddressOut}
                   />
                   <Form.Item name="tokenOut">
-                    <Input style={{ marginRight: 20, marginTop: 20 }} placeholder="Token Hash" />
+                    <Input
+                      value={tokenOutAddress}
+                      onChange={e => setTokenOutAddress(e.target.value)}
+                      style={{ marginRight: 20, marginTop: 20 }}
+                      placeholder="Out token contract address"
+                    />
+                    {tokenOutMetadata?.name && <span>{tokenOutMetadata.name}</span>}
                   </Form.Item>
                   <Form.Item name="swapValueOut">
-                    <Input style={{ marginRight: 20, marginTop: 20 }} placeholder="Token Amount" />
+                    <Input
+                      value={swapValueOut}
+                      onChange={e => setSwapValueOut(e.target.value)}
+                      style={{ marginRight: 20, marginTop: 20 }}
+                      placeholder="Token Amount in wei"
+                    />
+                    {tokenOutMetadata?.symbol && <span> {tokenOutMetadata.symbol} </span>}
                   </Form.Item>
                 </Col>
               </Row>
@@ -311,8 +354,8 @@ export default function TokenSwap({
           </Form>
         )}
         {notFound && <div>Swap already completed or inactive.</div>}
-        {!notFound && !swapComplete && readyToSwap && commitSwapId && numTokensOut && (
-          <Form name="join_room" onFinish={commitToSwap}>
+        {!notFound && !swapComplete && readyToSwap && commitSwapId && numTokensOut && swapData && (
+          <Form name="commit_swap_view" onFinish={commitToSwap}>
             <div
               style={{
                 border: "1px solid #cccccc",
@@ -328,8 +371,27 @@ export default function TokenSwap({
                   <Form.Item label="Swap Id" name="swapId">
                     <p>{commitSwapId}</p>
                   </Form.Item>
+                  <Form.Item label="Token In" name="tokenIn">
+                    <p>
+                      {tokenInMetadata &&
+                        (tokenInMetadata.symbol
+                          ? swapData.tokensIn.toNumber() + " " + tokenInMetadata.symbol + "(wei)"
+                          : "Loading...")}
+                    </p>
+                  </Form.Item>
                   <Form.Item label="Token Out" name="tokenOut">
-                    <p>{numTokensOut} </p>
+                    <p>
+                      {tokenOutMetadata &&
+                        (tokenOutMetadata.symbol
+                          ? swapData.tokensOut.toNumber() + " " + tokenOutMetadata.symbol + "(wei)"
+                          : "Loading...")}
+                    </p>
+                  </Form.Item>
+                  <Form.Item label="Swapping from" name="inParty">
+                    <Address address={swapData.inTokenParty} ensProvider={mainnetProvider} fontSize={18} />
+                  </Form.Item>
+                  <Form.Item label="Swapping to" name="inParty">
+                    <Address address={swapData.outTokenParty} ensProvider={mainnetProvider} fontSize={18} />
                   </Form.Item>
                 </Col>
               </Row>
