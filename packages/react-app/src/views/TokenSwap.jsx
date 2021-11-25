@@ -1,12 +1,14 @@
-import { SyncOutlined, SettingOutlined, ArrowDownOutlined } from "@ant-design/icons";
-import { utils, ethers } from "ethers";
-import { Button, Divider, Input, List, Row, Col, Tabs, Card, Form, Checkbox, notification, Steps } from "antd";
+import { SyncOutlined, BankOutlined, ArrowDownOutlined } from "@ant-design/icons";
+import { ethers, BigNumber } from "ethers";
+import { Button, Input, Row, Col, Form, notification, Steps, Select } from "antd";
 import React, { useState, useEffect } from "react";
-import { Address, Balance, ClaimFees, AddressInput } from "../components";
+import { Address, AddressInput } from "../components";
 import externalContracts from "../contracts/external_contracts";
 import { useParams, useHistory, Link } from "react-router-dom";
 import { checkAllowance, getTokenData } from "../helpers/utils";
 const { Step } = Steps;
+
+const tokenList = ["0x01be23585060835e02b77ef475b0cc51aa1e0709"];
 
 const ERC20ABI = externalContracts[1].contracts.UNI.abi;
 
@@ -32,8 +34,10 @@ export default function TokenSwap({
   const [addressOut, setAddressOut] = useState(address);
   const [numTokensOut, setNumTokensOut] = useState();
   const [commitSwapId, setCommitSwapId] = useState();
-  const [tokenInAddress, setTokenInAddress] = useState();
-  const [tokenOutAddress, setTokenOutAddress] = useState();
+  const [tokenInAddress, setTokenInAddress] = useState(tokenList[0]);
+  const [tokenOutAddress, setTokenOutAddress] = useState(tokenList[0]);
+  const [linkUsdValueIn, setLinkUsdValueIn] = useState(0);
+  const [linkUsdValueOut, setLinkUsdValueOut] = useState(0);
   const [swapValueIn, setSwapValueIn] = useState();
   const [swapValueOut, setSwapValueOut] = useState();
   const [swapStep, setSwapStep] = useState();
@@ -167,6 +171,24 @@ export default function TokenSwap({
     });
   };
 
+  const getLinkUsd = async () => {
+    let tokenValue = 0;
+    if (readContracts?.PriceConsumer) {
+      tokenValue = await readContracts.PriceConsumer.getLatestPrice();
+      tokenValue = ethers.utils.formatUnits(BigNumber.from(tokenValue), 8);
+    }
+    return tokenValue;
+  };
+
+  const shortenString = num => {
+    let newNum = num.toString();
+    if (newNum.length > 6) {
+      newNum = newNum.substr(0, 6);
+      newNum += "..." + newNum.substr(-4);
+    }
+    return newNum;
+  };
+
   const commitToSwap = async ({ currentSwapId, tokenOut }) => {
     currentSwapId = commitSwapId;
     tokenOut = numTokensOut;
@@ -244,7 +266,14 @@ export default function TokenSwap({
               style={{ float: "right" }}
               type="primary"
             >
-              <Link to="/swap">Open New Swap</Link>
+              <Link to="/swap">
+                <SyncOutlined />
+                pen New Swap
+              </Link>
+            </Button>
+            <Button href="https://faucets.chain.link/rinkeby" style={{ float: "right", margin: "10px" }} type="primary">
+              <BankOutlined />
+              Rinkeby LINK Faucet
             </Button>
           </Col>
         </Row>
@@ -284,21 +313,55 @@ export default function TokenSwap({
                   />
                   <Form.Item name="tokenIn">
                     <Input
+                      defaultValue={tokenInAddress}
                       value={tokenInAddress}
                       onChange={e => setTokenInAddress(e.target.value)}
                       style={{ marginRight: 0, marginTop: 20 }}
                       placeholder="In token contract address"
+                      addonAfter={
+                        <Select
+                          defaultValue={tokenInAddress}
+                          value={tokenInAddress && shortenString(tokenInAddress)}
+                          onChange={value => {
+                            setTokenInAddress(value);
+                            setSwapValueIn(0);
+                            setLinkUsdValueIn(0);
+                          }}
+                        >
+                          <Select.Option value={tokenList[0]}>LINK</Select.Option>
+                          <Select.Option value={""}>Custom Token</Select.Option>
+                        </Select>
+                      }
                     />
                     {tokenInMetadata?.name && <span> {tokenInMetadata.name} </span>}
                   </Form.Item>
                   <Form.Item name="swapValueIn">
                     <Input
                       value={swapValueIn}
-                      onChange={e => setSwapValueIn(e.target.value)}
+                      onChange={async e => {
+                        setSwapValueIn(e.target.value);
+                        if (tokenList[0] === tokenInAddress) {
+                          const linkUsdValue = await getLinkUsd();
+                          const newNum = e.target.value;
+                          const numTokens = parseFloat(newNum);
+                          const newValue = numTokens * linkUsdValue;
+                          const rounded = Math.round((newValue + Number.EPSILON) * 100) / 100;
+                          setLinkUsdValueIn(rounded);
+                          console.log("startIt Second ", linkUsdValueIn, linkUsdValue, rounded, numTokens);
+                        } else {
+                          setLinkUsdValueIn(0);
+                        }
+                      }}
                       style={{ marginRight: 20, marginTop: 20 }}
                       placeholder="Token Amount in wei"
                     />
                     {tokenInMetadata?.symbol && <span> {tokenInMetadata.symbol} </span>}
+                    {linkUsdValueIn > 0 && (
+                      <div>
+                        <br />
+                        <span> Total LINK/USD = ${linkUsdValueIn} </span>
+                      </div>
+                    )}
                   </Form.Item>
                 </Col>
               </Row>
@@ -327,21 +390,55 @@ export default function TokenSwap({
                   />
                   <Form.Item name="tokenOut">
                     <Input
+                      defaultValue={tokenInAddress}
                       value={tokenOutAddress}
                       onChange={e => setTokenOutAddress(e.target.value)}
                       style={{ marginRight: 20, marginTop: 20 }}
                       placeholder="Out token contract address"
+                      addonAfter={
+                        <Select
+                          defaultValue={tokenOutAddress}
+                          value={tokenOutAddress && shortenString(tokenOutAddress)}
+                          onChange={value => {
+                            setTokenOutAddress(value);
+                            setSwapValueOut(0);
+                            setLinkUsdValueOut(0);
+                          }}
+                        >
+                          <Select.Option value={tokenList[0]}>LINK</Select.Option>
+                          <Select.Option value={""}>Custom Token</Select.Option>
+                        </Select>
+                      }
                     />
                     {tokenOutMetadata?.name && <span>{tokenOutMetadata.name}</span>}
                   </Form.Item>
                   <Form.Item name="swapValueOut">
                     <Input
                       value={swapValueOut}
-                      onChange={e => setSwapValueOut(e.target.value)}
+                      onChange={async e => {
+                        setSwapValueOut(e.target.value);
+                        if (tokenList[0] === tokenOutAddress) {
+                          const linkUsdValue = await getLinkUsd();
+                          const newNum = e.target.value;
+                          const numTokens = parseFloat(newNum);
+                          const newValue = numTokens * linkUsdValue;
+                          const rounded = Math.round((newValue + Number.EPSILON) * 100) / 100;
+                          setLinkUsdValueOut(rounded);
+                          console.log("startIt Second ", linkUsdValueOut, linkUsdValue, rounded, numTokens);
+                        } else {
+                          setLinkUsdValueOut(0);
+                        }
+                      }}
                       style={{ marginRight: 20, marginTop: 20 }}
                       placeholder="Token Amount in wei"
                     />
                     {tokenOutMetadata?.symbol && <span> {tokenOutMetadata.symbol} </span>}
+                    {linkUsdValueOut > 0 && (
+                      <div>
+                        <br />
+                        <span> Total LINK/USD = ${linkUsdValueOut} </span>
+                      </div>
+                    )}
                   </Form.Item>
                 </Col>
               </Row>

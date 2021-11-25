@@ -2,7 +2,8 @@
   "localhost_MoonSwapAddress": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
   "localhost_dGTCAddress": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
   "localhost_dETHAddress": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
-  "rinkeby_MoonSwapAddress": "0x28D480c56eE7064aed894E8ABbaa15F01DB30ebA",
+  "rinkeby_MoonSwapAddress": "0xD0B73dF4B3E086ee9f59Fe97C0BF37A8fc24D04B",
   "rinkeby_dETHAddress": "0x1d269Cf95A2732ce98fAaF909642D756b59Af0aF",
-  "rinkeby_dGTCAddress": "0xE0F028C08852D70243BD7c6EF030bCf6049e6d98"
+  "rinkeby_dGTCAddress": "0xE0F028C08852D70243BD7c6EF030bCf6049e6d98",
+  "rinkeby_PriceConsumerAddress": "0xe982D275c8e82aF7C23D9Ea11BC22ad11e475384"
 }
