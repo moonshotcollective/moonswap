@@ -262,6 +262,7 @@ export default function TokenSwap({
                 setCommitSwapId(null);
                 setReadyToSwap(false);
                 setSwapStep(0);
+                setNotFound(false);
               }}
               style={{ float: "right" }}
               type="primary"
@@ -328,8 +329,8 @@ export default function TokenSwap({
                             setLinkUsdValueIn(0);
                           }}
                         >
-                          <Select.Option value={tokenList[0]}>LINK</Select.Option>
                           <Select.Option value={""}>Custom Token</Select.Option>
+                          <Select.Option value={tokenList[0]}>LINK</Select.Option>
                         </Select>
                       }
                     />
@@ -359,7 +360,7 @@ export default function TokenSwap({
                     {linkUsdValueIn > 0 && (
                       <div>
                         <br />
-                        <span> Total LINK/USD = ${linkUsdValueIn} </span>
+                        <span> ${`${linkUsdValueIn} USD`} </span>
                       </div>
                     )}
                   </Form.Item>
@@ -405,8 +406,8 @@ export default function TokenSwap({
                             setLinkUsdValueOut(0);
                           }}
                         >
-                          <Select.Option value={tokenList[0]}>LINK</Select.Option>
                           <Select.Option value={""}>Custom Token</Select.Option>
+                          <Select.Option value={tokenList[0]}>LINK</Select.Option>
                         </Select>
                       }
                     />
@@ -436,7 +437,7 @@ export default function TokenSwap({
                     {linkUsdValueOut > 0 && (
                       <div>
                         <br />
-                        <span> Total LINK/USD = ${linkUsdValueOut} </span>
+                        <span> ${`${linkUsdValueOut} USD`} </span>
                       </div>
                     )}
                   </Form.Item>
