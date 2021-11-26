@@ -140,23 +140,31 @@ export default function TokenSwap({
     const inContract = new ethers.Contract(tokenInAddress, ERC20ABI, signer);
 
     const currentAllowance = await checkAllowance(tokenInAddress, signer, readContracts.MoonSwap.address);
+    const roundedSwapInValue = Math.round(swapValueIn);
+    const roundedSwapOutValue = Math.round(swapValueOut);
 
-    if (currentAllowance < ethers.utils.formatEther(swapValueIn)) {
+    if (currentAllowance < ethers.utils.formatEther(roundedSwapInValue)) {
       // Approve the token allowance
       await approveTokenAllowance({
-        maxApproval: swapValueIn,
+        maxApproval: roundedSwapInValue,
         tokenInContract: inContract,
       });
     }
 
     const result = tx(
-      writeContracts.MoonSwap.createNewSwap(tokenInAddress, tokenOutAddress, swapValueIn, swapValueOut, addressOut),
+      writeContracts.MoonSwap.createNewSwap(
+        tokenInAddress,
+        tokenOutAddress,
+        roundedSwapInValue,
+        roundedSwapOutValue,
+        addressOut,
+      ),
       (update, error) => {
         console.log("result check ", update, error);
         if (update && (update.status === "confirmed" || update.status === 1)) {
           console.log("📡 New Swap Created:", update);
           setReadyToSwap(true);
-          setNumTokensOut(swapValueOut);
+          setNumTokensOut(roundedSwapOutValue);
           setSwapStep(1);
           notification.success({
             message: "Ready to Commit To Swap",
