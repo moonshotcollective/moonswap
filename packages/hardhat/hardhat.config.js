@@ -26,7 +26,7 @@ const { isAddress, getAddress, formatUnits, parseUnits } = utils;
 //
 // Select the network you want to deploy to here:
 //
-const defaultNetwork = "matic";
+const defaultNetwork = "rinkeby";
 
 const mainnetGwei = 21;
 
@@ -116,12 +116,6 @@ module.exports = {
       gasPrice: mainnetGwei * 1000000000,
       accounts:
         process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
-    },
-    matic: {
-      url: "https://polygon-mainnet.g.alchemy.com/v2/-49RNFK4NSMxiO6gRl8GQ8VFAGoSg5V9",
-      accounts: {
-        mnemonic: mnemonic(),
-      },
     },
   },
   solidity: {
