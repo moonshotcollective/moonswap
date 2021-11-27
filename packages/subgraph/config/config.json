@@ -5,5 +5,9 @@
   "rinkeby_MoonSwapAddress": "0xD0B73dF4B3E086ee9f59Fe97C0BF37A8fc24D04B",
   "rinkeby_dETHAddress": "0x1d269Cf95A2732ce98fAaF909642D756b59Af0aF",
   "rinkeby_dGTCAddress": "0xE0F028C08852D70243BD7c6EF030bCf6049e6d98",
-  "rinkeby_PriceConsumerAddress": "0xe982D275c8e82aF7C23D9Ea11BC22ad11e475384"
+  "rinkeby_PriceConsumerAddress": "0xe982D275c8e82aF7C23D9Ea11BC22ad11e475384",
+  "matic_MoonSwapAddress": "0xb67d24FC8F1C1621A4afa156e826e072B0A44a99",
+  "matic_PriceConsumerAddress": "0x31600F54b5f163A5f8EcCD931548c0c9428977E8",
+  "matic_dETHAddress": "0x1E496665d660AA17199619Dc81bc94BFA9b34E90",
+  "matic_dGTCAddress": "0xadf0D1bb04D8E108eEe84de00fF094D6177F50CD"
 }
