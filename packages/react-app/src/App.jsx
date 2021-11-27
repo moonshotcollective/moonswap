@@ -470,10 +470,10 @@ function App(props) {
               }}
               to="/swap"
             >
-              <InteractionOutlined /> Swap
+              <InteractionOutlined /> Start Swap
             </Link>
           </Menu.Item>
-          <Menu.Item key="/contracts">
+          {/* <Menu.Item key="/contracts">
             <Link
               onClick={() => {
                 setRoute("/contracts");
@@ -492,7 +492,7 @@ function App(props) {
             >
               Mainnet DAI
             </Link>
-          </Menu.Item>
+          </Menu.Item> */}
         </Menu>
 
         <Switch>
