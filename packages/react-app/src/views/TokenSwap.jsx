@@ -121,7 +121,8 @@ export default function TokenSwap({
   const approveTokenAllowance = async ({ maxApproval, tokenInContract }) => {
     // const decimals = await getTokenDetails({ token });
     // FIX: Harcoded decimals value
-    const newAllowance = ethers.utils.parseUnits(maxApproval, await tokenInContract.decimals());
+    console.log("maxApproval", maxApproval);
+    const newAllowance = ethers.utils.parseUnits(maxApproval.toString(), await tokenInContract.decimals());
     const res = await tokenInContract.approve(readContracts.MoonSwap.address, newAllowance);
     await res.wait(1);
   };
@@ -138,6 +139,8 @@ export default function TokenSwap({
     const signer = userSigner;
 
     const inContract = new ethers.Contract(tokenInAddress, ERC20ABI, signer);
+    console.log("tokenInAddress: ", tokenInAddress);
+    console.log("tokenOutAddress: ", tokenOutAddress);
 
     const currentAllowance = await checkAllowance(tokenInAddress, signer, readContracts.MoonSwap.address);
     const roundedSwapInValue = Math.round(swapValueIn);
@@ -244,6 +247,35 @@ export default function TokenSwap({
     );
   }
 
+  const [tokenMetaDataOptions, setTokenMetaDataOptions] = useState({
+    "0x01be23585060835e02b77ef475b0cc51aa1e0709": {
+      label: "LINK",
+      symbol: "LINK",
+    },
+  });
+
+  useEffect(() => {
+    if (tokenInMetadata && tokenInMetadata.name) {
+      const options = { ...tokenMetaDataOptions };
+      options[tokenInAddress] = {
+        label: tokenInMetadata.name,
+        symbol: tokenInMetadata.symbol,
+      };
+      setTokenMetaDataOptions(options);
+    }
+  }, [tokenInMetadata]);
+
+  useEffect(() => {
+    if (tokenOutMetadata && tokenOutMetadata.name) {
+      const options = { ...tokenMetaDataOptions };
+      options[tokenOutAddress] = {
+        label: tokenOutMetadata.name,
+        symbol: tokenOutMetadata.symbol,
+      };
+      setTokenMetaDataOptions(options);
+    }
+  }, [tokenOutMetadata]);
+
   return (
     <div
       style={{
@@ -337,8 +369,13 @@ export default function TokenSwap({
                             setLinkUsdValueIn(0);
                           }}
                         >
+                          {Object.keys(tokenMetaDataOptions).map(key => (
+                            <Select.Option key={key} value={key.toString()}>
+                              {tokenMetaDataOptions[key].symbol}
+                            </Select.Option>
+                          ))}
                           <Select.Option value={""}>Custom Token</Select.Option>
-                          <Select.Option value={tokenList[0]}>LINK</Select.Option>
+                          {/* <Select.Option value={tokenList[0]}>LINK</Select.Option> */}
                         </Select>
                       }
                     />
@@ -414,8 +451,13 @@ export default function TokenSwap({
                             setLinkUsdValueOut(0);
                           }}
                         >
+                          {Object.keys(tokenMetaDataOptions).map(key => (
+                            <Select.Option label={tokenMetaDataOptions[key].symbol} key={key} value={key.toString()}>
+                              {tokenMetaDataOptions[key].symbol}
+                            </Select.Option>
+                          ))}
                           <Select.Option value={""}>Custom Token</Select.Option>
-                          <Select.Option value={tokenList[0]}>LINK</Select.Option>
+                          {/* <Select.Option value={tokenList[0]}>LINK</Select.Option> */}
                         </Select>
                       }
                     />
