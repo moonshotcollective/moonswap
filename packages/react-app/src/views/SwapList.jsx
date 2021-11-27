@@ -64,8 +64,21 @@ export default function SwapList({
   return (
     <div>
       <div style={{ marginBottom: 25, flex: 1 }}>
-        <Card title="Swaps" style={{ width: "100%" }}>
+        <Card title="List of Swaps" style={{ width: "100%" }}>
           <List
+            header={
+              <Row>
+                <Col span={6} style={{ fontSize: "20px", textDecoration: "underline" }}>
+                  Swap Id
+                </Col>
+                <Col span={12} style={{ fontSize: "20px", textDecoration: "underline" }}>
+                  Swap Transaction Address
+                </Col>
+                <Col span={6} style={{ fontSize: "20px", textDecoration: "underline" }}>
+                  Commit To Swap
+                </Col>
+              </Row>
+            }
             bordered
             dataSource={activeSwaps}
             pagination={{ pageSize: 10 }}
