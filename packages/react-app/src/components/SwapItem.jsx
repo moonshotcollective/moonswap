@@ -78,6 +78,8 @@ export default function SwapItem({ onClick, hash, index, localProvider, chainId,
           <Button onClick={onClick}>Commit Swap</Button>
         </div>
       </div>
+      <br />
+      <hr />
     </div>
   );
 }
